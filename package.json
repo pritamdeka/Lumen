@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "vercel dev",
+    "preview:fixture": "node test-fixtures/preview-server.js",
     "test": "node --test",
     "deploy": "vercel --prod"
   }

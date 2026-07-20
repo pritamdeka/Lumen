@@ -23,5 +23,14 @@ test("frontend contains direction and upload accessibility hooks", async () => {
   assert.match(html, /document\.documentElement\.dir=L\.dir/);
   assert.match(html, /id="uploadMeta" aria-live="polite"/);
   assert.match(html, /setAttribute\("aria-label"/);
-  assert.match(html, /reviewedOnly:!IS_LOCAL_PREVIEW/);
+  assert.match(html, /LOCALES\.filter\(locale=>locale\.enabled\)/);
+});
+
+test("frontend implements extraction review before explanation", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /stage:"extract"/);
+  assert.match(html, /stage:"explain"/);
+  assert.match(html, /id="reviewPanel"/);
+  assert.match(html, /collectConfirmedExtraction/);
+  assert.match(html, /item\.confidence!=="high"/);
 });

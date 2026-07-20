@@ -86,7 +86,9 @@ cp .env.example .env        # fill in your keys
 vercel dev                  # serves on http://localhost:3000
 ```
 
-Run the zero-dependency test suite with `npm test`. Localhost exposes draft translations for native-speaker review; production exposes only locales marked `reviewed` in `src/locales.js`. Use `docs/translation-review.md` before enabling a locale.
+Run the zero-dependency test suite with `npm test`. All 13 languages are available in local and production builds. Non-English interface translations remain marked as drafts in `src/locales.js`; use `docs/translation-review.md` to record native-speaker sign-off.
+
+Analysis uses two stages: the first request extracts visible values and assigns legibility confidence; medium- and low-confidence values are shown in an editable confirmation screen. Only confirmed extraction data is sent in the second request that generates the explanation.
 
 Opening `index.html` directly as a file will not work — `/api/analyze` needs the Vercel runtime.
 

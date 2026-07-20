@@ -4,7 +4,7 @@
 
 - Complete locale coverage, native-speaker review, RTL support, multi-page analysis, and automated regression tests.
 - Keep uploaded images and report history out of cloud storage. Store history only in the browser.
-- Add extraction-confidence warnings and user confirmation before interpreting uncertain values.
+- Continue native-speaker review and usability testing for the extraction-confidence confirmation workflow.
 
 ## Useful local features
 

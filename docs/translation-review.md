@@ -1,6 +1,6 @@
 # Translation Review Checklist
 
-All non-English interface translations are drafts until a native reviewer signs off. Update `reviewed` in `src/locales.js` only after completing this checklist.
+All non-English interface translations are available but remain marked as drafts until a native reviewer signs off. Update `reviewed` in `src/locales.js` only after completing this checklist; the flag records review status and does not hide the language.
 
 | Locale | Language | Reviewer | Date | Status |
 |---|---|---|---|---|

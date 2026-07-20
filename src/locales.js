@@ -5,7 +5,10 @@ export const REQUIRED_UI_KEYS = [
   "changeLanguage", "newReport", "recentReports", "clearHistory", "noReports",
   "disclaimerTitle", "disclaimerBody", "reading", "translating", "copied",
   "invalidFiles", "uploadFirst", "tooManyPages", "payloadTooLarge", "remove",
-  "page", "reference", "report", "normal", "low", "high", "borderline", "critical"
+  "page", "reference", "report", "normal", "low", "high", "borderline", "critical",
+  "reviewTitle", "reviewIntro", "confidence", "highConfidence", "mediumConfidence",
+  "lowConfidence", "confirmValues", "cancelReview", "uncertainValues", "fieldTest",
+  "fieldValue", "fieldUnit"
 ];
 
 const en = {
@@ -61,6 +64,22 @@ const translations = {
   }
 };
 
+const reviewTranslations = {
+  en: { reviewTitle: "Check uncertain values", reviewIntro: "The highlighted text was difficult to read. Compare it with the report and correct anything that is wrong before Lumen explains it.", confidence: "Confidence", highConfidence: "Clear", mediumConfidence: "Check", lowConfidence: "Unclear", confirmValues: "Confirm and explain", cancelReview: "Cancel", uncertainValues: "values need checking", fieldTest: "Test", fieldValue: "Value", fieldUnit: "Unit" },
+  hi: { reviewTitle: "अस्पष्ट मान जाँचें", reviewIntro: "चिह्नित पाठ पढ़ना कठिन था। रिपोर्ट से मिलाएँ और व्याख्या से पहले गलत जानकारी सुधारें।", confidence: "विश्वास", highConfidence: "स्पष्ट", mediumConfidence: "जाँचें", lowConfidence: "अस्पष्ट", confirmValues: "पुष्टि करें और समझाएँ", cancelReview: "रद्द करें", uncertainValues: "मान जाँचने हैं", fieldTest: "जाँच", fieldValue: "मान", fieldUnit: "इकाई" },
+  bn: { reviewTitle: "অনিশ্চিত মান যাচাই করুন", reviewIntro: "চিহ্নিত লেখা পড়া কঠিন ছিল। রিপোর্টের সঙ্গে মিলিয়ে ভুল তথ্য ঠিক করুন।", confidence: "নিশ্চয়তা", highConfidence: "স্পষ্ট", mediumConfidence: "যাচাই করুন", lowConfidence: "অস্পষ্ট", confirmValues: "নিশ্চিত করে ব্যাখ্যা করুন", cancelReview: "বাতিল", uncertainValues: "টি মান যাচাই দরকার", fieldTest: "পরীক্ষা", fieldValue: "মান", fieldUnit: "একক" },
+  as: { reviewTitle: "অনিশ্চিত মান পৰীক্ষা কৰক", reviewIntro: "চিহ্নিত লিখনি পঢ়িবলৈ কঠিন আছিল। প্ৰতিবেদনৰ সৈতে মিলাই ভুল তথ্য শুধৰাওক।", confidence: "নিশ্চয়তা", highConfidence: "স্পষ্ট", mediumConfidence: "পৰীক্ষা কৰক", lowConfidence: "অস্পষ্ট", confirmValues: "নিশ্চিত কৰি বুজাওক", cancelReview: "বাতিল", uncertainValues: "টা মান পৰীক্ষা কৰিব লাগিব", fieldTest: "পৰীক্ষা", fieldValue: "মান", fieldUnit: "একক" },
+  ta: { reviewTitle: "தெளிவற்ற மதிப்புகளைச் சரிபார்க்கவும்", reviewIntro: "குறிக்கப்பட்ட எழுத்து படிக்க கடினமாக இருந்தது. அறிக்கையுடன் ஒப்பிட்டு தவறுகளைத் திருத்தவும்.", confidence: "நம்பகத்தன்மை", highConfidence: "தெளிவு", mediumConfidence: "சரிபார்க்கவும்", lowConfidence: "தெளிவில்லை", confirmValues: "உறுதிசெய்து விளக்கவும்", cancelReview: "ரத்துசெய்", uncertainValues: "மதிப்புகளைச் சரிபார்க்க வேண்டும்", fieldTest: "பரிசோதனை", fieldValue: "மதிப்பு", fieldUnit: "அலகு" },
+  te: { reviewTitle: "అస్పష్టమైన విలువలను తనిఖీ చేయండి", reviewIntro: "గుర్తించిన వచనం చదవడం కష్టంగా ఉంది. నివేదికతో పోల్చి తప్పులను సరిచేయండి.", confidence: "నమ్మకం", highConfidence: "స్పష్టం", mediumConfidence: "తనిఖీ", lowConfidence: "అస్పష్టం", confirmValues: "నిర్ధారించి వివరించండి", cancelReview: "రద్దు", uncertainValues: "విలువలను తనిఖీ చేయాలి", fieldTest: "పరీక్ష", fieldValue: "విలువ", fieldUnit: "యూనిట్" },
+  mr: { reviewTitle: "अस्पष्ट मूल्ये तपासा", reviewIntro: "चिन्हांकित मजकूर वाचणे कठीण होते. अहवालाशी तुलना करून चुका दुरुस्त करा.", confidence: "विश्वास", highConfidence: "स्पष्ट", mediumConfidence: "तपासा", lowConfidence: "अस्पष्ट", confirmValues: "पुष्टी करून समजवा", cancelReview: "रद्द करा", uncertainValues: "मूल्ये तपासायची आहेत", fieldTest: "चाचणी", fieldValue: "मूल्य", fieldUnit: "एकक" },
+  kn: { reviewTitle: "ಅಸ್ಪಷ್ಟ ಮೌಲ್ಯಗಳನ್ನು ಪರಿಶೀಲಿಸಿ", reviewIntro: "ಗುರುತಿಸಿದ ಪಠ್ಯವನ್ನು ಓದುವುದು ಕಷ್ಟವಾಗಿತ್ತು. ವರದಿಯೊಂದಿಗೆ ಹೋಲಿಸಿ ತಪ್ಪುಗಳನ್ನು ಸರಿಪಡಿಸಿ.", confidence: "ವಿಶ್ವಾಸ", highConfidence: "ಸ್ಪಷ್ಟ", mediumConfidence: "ಪರಿಶೀಲಿಸಿ", lowConfidence: "ಅಸ್ಪಷ್ಟ", confirmValues: "ದೃಢೀಕರಿಸಿ ವಿವರಿಸಿ", cancelReview: "ರದ್ದು", uncertainValues: "ಮೌಲ್ಯಗಳನ್ನು ಪರಿಶೀಲಿಸಬೇಕು", fieldTest: "ಪರೀಕ್ಷೆ", fieldValue: "ಮೌಲ್ಯ", fieldUnit: "ಘಟಕ" },
+  gu: { reviewTitle: "અસ્પષ્ટ મૂલ્યો તપાસો", reviewIntro: "ચિહ્નિત લખાણ વાંચવું મુશ્કેલ હતું. અહેવાલ સાથે સરખાવી ભૂલો સુધારો.", confidence: "વિશ્વાસ", highConfidence: "સ્પષ્ટ", mediumConfidence: "તપાસો", lowConfidence: "અસ્પષ્ટ", confirmValues: "ખાતરી કરીને સમજાવો", cancelReview: "રદ કરો", uncertainValues: "મૂલ્યો તપાસવાના છે", fieldTest: "તપાસ", fieldValue: "મૂલ્ય", fieldUnit: "એકમ" },
+  ml: { reviewTitle: "അവ്യക്തമായ മൂല്യങ്ങൾ പരിശോധിക്കുക", reviewIntro: "അടയാളപ്പെടുത്തിയ എഴുത്ത് വായിക്കാൻ ബുദ്ധിമുട്ടായിരുന്നു. റിപ്പോർട്ടുമായി താരതമ്യം ചെയ്ത് തെറ്റുകൾ തിരുത്തുക.", confidence: "വിശ്വാസം", highConfidence: "വ്യക്തം", mediumConfidence: "പരിശോധിക്കുക", lowConfidence: "അവ്യക്തം", confirmValues: "സ്ഥിരീകരിച്ച് വിശദീകരിക്കുക", cancelReview: "റദ്ദാക്കുക", uncertainValues: "മൂല്യങ്ങൾ പരിശോധിക്കണം", fieldTest: "പരിശോധന", fieldValue: "മൂല്യം", fieldUnit: "യൂണിറ്റ്" },
+  pa: { reviewTitle: "ਅਸਪਸ਼ਟ ਮੁੱਲ ਜਾਂਚੋ", reviewIntro: "ਨਿਸ਼ਾਨ ਲਗਾਇਆ ਲਿਖਤ ਪੜ੍ਹਨਾ ਔਖਾ ਸੀ। ਰਿਪੋਰਟ ਨਾਲ ਮਿਲਾ ਕੇ ਗਲਤੀਆਂ ਠੀਕ ਕਰੋ।", confidence: "ਭਰੋਸਾ", highConfidence: "ਸਪਸ਼ਟ", mediumConfidence: "ਜਾਂਚੋ", lowConfidence: "ਅਸਪਸ਼ਟ", confirmValues: "ਪੁਸ਼ਟੀ ਕਰਕੇ ਸਮਝਾਓ", cancelReview: "ਰੱਦ ਕਰੋ", uncertainValues: "ਮੁੱਲ ਜਾਂਚਣੇ ਹਨ", fieldTest: "ਟੈਸਟ", fieldValue: "ਮੁੱਲ", fieldUnit: "ਇਕਾਈ" },
+  or: { reviewTitle: "ଅସ୍ପଷ୍ଟ ମୂଲ୍ୟ ଯାଞ୍ଚ କରନ୍ତୁ", reviewIntro: "ଚିହ୍ନିତ ଲେଖା ପଢ଼ିବା କଷ୍ଟକର ଥିଲା। ରିପୋର୍ଟ ସହ ମେଳ କରି ଭୁଲ ସୁଧାରନ୍ତୁ।", confidence: "ବିଶ୍ୱାସ", highConfidence: "ସ୍ପଷ୍ଟ", mediumConfidence: "ଯାଞ୍ଚ", lowConfidence: "ଅସ୍ପଷ୍ଟ", confirmValues: "ନିଶ୍ଚିତ କରି ବୁଝାନ୍ତୁ", cancelReview: "ବାତିଲ", uncertainValues: "ମୂଲ୍ୟ ଯାଞ୍ଚ ଆବଶ୍ୟକ", fieldTest: "ପରୀକ୍ଷା", fieldValue: "ମୂଲ୍ୟ", fieldUnit: "ଏକକ" },
+  ur: { reviewTitle: "غیر واضح اقدار چیک کریں", reviewIntro: "نشان زدہ متن پڑھنا مشکل تھا۔ رپورٹ سے موازنہ کریں اور وضاحت سے پہلے غلطی درست کریں۔", confidence: "اعتماد", highConfidence: "واضح", mediumConfidence: "چیک کریں", lowConfidence: "غیر واضح", confirmValues: "تصدیق کرکے سمجھائیں", cancelReview: "منسوخ", uncertainValues: "اقدار چیک کرنا ضروری ہیں", fieldTest: "ٹیسٹ", fieldValue: "قدر", fieldUnit: "اکائی" }
+};
+
 const metadata = [
   ["en", "English", "simple English", "ltr", "Latin", true],
   ["hi", "हिन्दी", "Hindi in Devanagari script", "ltr", "Devanagari", false],
@@ -79,7 +98,7 @@ const metadata = [
 
 export const LOCALES = metadata.map(([code, label, prompt, dir, script, reviewed]) => ({
   code, label, prompt, dir, script, reviewed, enabled: true,
-  ui: code === "en" ? en : translations[code]
+  ui: { ...(code === "en" ? en : translations[code]), ...reviewTranslations[code] }
 }));
 
 export const DEFAULT_LOCALE = "en";
