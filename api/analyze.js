@@ -33,7 +33,7 @@ Respond with ONLY valid JSON, no markdown fences:
 {
  "isMedical": true,
  "reportType": "document type exactly as visible",
- "findings": [{"test":"visible label","value":"visible value","unit":"visible unit or empty","refRange":"visible range or empty","confidence":"high|medium|low","sourceText":"short verbatim text supporting the extraction"}]
+ "findings": [{"test":"visible label","value":"visible value","unit":"visible unit or empty","refRange":"visible range or empty","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name","comparisonUnit":"normalized visible unit","confidence":"high|medium|low","sourceText":"short verbatim text supporting the extraction"}]
 }`;
 }
 
@@ -60,10 +60,11 @@ Respond with ONLY valid JSON, no markdown fences:
  "headline": "one warm sentence in the requested language (max 18 words)",
  "subline": "one sentence in the requested language (max 20 words)",
  "reportType": "document type in the requested language",
- "findings": [{"test":"name","meaningShort":"plain meaning","value":"number","unit":"unit","refRange":"range if shown","status":"normal|low|high|borderline|critical","explain":"one plain sentence for non-normal values, otherwise empty","confirmed":true}],
+ "findings": [{"test":"localized name","meaningShort":"plain meaning","value":"original display value","unit":"original unit","refRange":"original range if shown","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name from confirmed data","comparisonUnit":"normalized original unit","confidence":"high|medium|low","status":"normal|low|high|borderline|critical","explain":"one plain sentence for non-normal values, otherwise empty","confirmed":true}],
  "meaning": ["2-4 short paragraphs in the requested language"],
  "questions": ["4-6 questions in the requested language referencing actual values"],
  "lifestyle": ["2-4 gentle general wellbeing suggestions; never medication advice"],
+ "glossary": [{"term":"medical term used in this explanation","definition":"short plain-language definition in the requested language"}],
  "urgencyTitle": "short follow-up heading in the requested language",
  "urgencyNote": "1-2 non-alarmist follow-up sentences in the requested language"
 }`;
@@ -71,6 +72,16 @@ Respond with ONLY valid JSON, no markdown fences:
 
 function cleanText(value, maxLength = 200) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+function cleanNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function cleanReferenceKind(value) {
+  return ["interval", "upper", "lower", "text"].includes(value) ? value : "text";
 }
 
 export function normalizeExtraction(value) {
@@ -87,6 +98,12 @@ export function normalizeExtraction(value) {
       value: cleanText(finding?.value),
       unit: cleanText(finding?.unit, 80),
       refRange: cleanText(finding?.refRange, 120),
+      numericValue: cleanNumber(finding?.numericValue),
+      referenceLow: cleanNumber(finding?.referenceLow),
+      referenceHigh: cleanNumber(finding?.referenceHigh),
+      referenceKind: cleanReferenceKind(finding?.referenceKind),
+      comparisonName: cleanText(finding?.comparisonName || finding?.test),
+      comparisonUnit: cleanText(finding?.comparisonUnit || finding?.unit, 80),
       confidence: ["high", "medium", "low"].includes(finding?.confidence) ? finding.confidence : "low",
       sourceText: cleanText(finding?.sourceText, 300),
       confirmed: finding?.confirmed === true
@@ -210,12 +227,45 @@ export function parseReport(text, localeCode = "en") {
     throw new Error("Invalid report shape");
   }
   if (report.outputLocale !== localeCode) throw new Error("Wrong output locale");
-  report.findings = Array.isArray(report.findings) ? report.findings : [];
+  report.findings = Array.isArray(report.findings) ? report.findings.slice(0, 100).map(finding => ({
+    test: cleanText(finding?.test), meaningShort: cleanText(finding?.meaningShort, 300),
+    value: cleanText(finding?.value), unit: cleanText(finding?.unit, 80), refRange: cleanText(finding?.refRange, 120),
+    numericValue: cleanNumber(finding?.numericValue), referenceLow: cleanNumber(finding?.referenceLow), referenceHigh: cleanNumber(finding?.referenceHigh),
+    referenceKind: cleanReferenceKind(finding?.referenceKind), comparisonName: cleanText(finding?.comparisonName || finding?.test),
+    comparisonUnit: cleanText(finding?.comparisonUnit || finding?.unit, 80),
+    confidence: ["high", "medium", "low"].includes(finding?.confidence) ? finding.confidence : "high",
+    status: ["normal", "low", "high", "borderline", "critical"].includes(finding?.status) ? finding.status : "borderline",
+    explain: cleanText(finding?.explain, 500), confirmed: finding?.confirmed === true
+  })) : [];
   report.meaning = Array.isArray(report.meaning) ? report.meaning : [];
   report.questions = Array.isArray(report.questions) ? report.questions : [];
   report.lifestyle = Array.isArray(report.lifestyle) ? report.lifestyle : [];
+  report.glossary = Array.isArray(report.glossary) ? report.glossary.slice(0, 20).map(item => ({ term: cleanText(item?.term), definition: cleanText(item?.definition, 500) })).filter(item => item.term && item.definition) : [];
   const narrative = [report.headline, report.subline, report.reportType, ...report.meaning, ...report.questions, report.urgencyTitle, report.urgencyNote].join(" ");
   if (!hasExpectedScript(narrative, localeCode)) throw new Error("Wrong output script");
+  return report;
+}
+
+export function attachExtractionMetadata(report, extraction) {
+  if (!extraction?.findings?.length) return report;
+  report.findings = (report.findings || []).map((finding, index) => {
+    const source = extraction.findings[index];
+    if (!source) return finding;
+    return {
+      ...finding,
+      value: source.value,
+      unit: source.unit,
+      refRange: source.refRange,
+      numericValue: source.numericValue,
+      referenceLow: source.referenceLow,
+      referenceHigh: source.referenceHigh,
+      referenceKind: source.referenceKind,
+      comparisonName: source.comparisonName || source.test,
+      comparisonUnit: source.comparisonUnit || source.unit,
+      confidence: source.confidence,
+      confirmed: source.confirmed === true
+    };
+  });
   return report;
 }
 
@@ -276,7 +326,7 @@ export default async function handler(req, res) {
         res.status(200).json({ extraction, provider: provider.name });
         return;
       }
-      const report = parseReport(raw, input.localeCode);
+      const report = attachExtractionMetadata(parseReport(raw, input.localeCode), input.extraction);
       res.status(200).json({ report, provider: provider.name });
       return;
     } catch (error) {

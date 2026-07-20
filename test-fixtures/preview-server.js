@@ -11,9 +11,9 @@ const extraction = {
   reportType: "Detailed candidate report",
   findings: [
     { test: "Blood pressure", value: "110/70", unit: "mmHg", refRange: "", confidence: "high", sourceText: "Blood pressure 110/70" },
-    { test: "R.B.S", value: "96.0", unit: "", refRange: "", confidence: "medium", sourceText: "R.B.S 96.0" },
-    { test: "Creatinine", value: "0.3", unit: "", refRange: "", confidence: "low", sourceText: "Creatinine 0.3" },
-    { test: "Haemoglobin", value: "13.6", unit: "g/dL", refRange: "", confidence: "high", sourceText: "Haemoglobin g/dL 13.6" }
+    { test: "R.B.S", value: "96.0", unit: "mg/dL", refRange: "70–140", numericValue: 96, referenceLow: 70, referenceHigh: 140, referenceKind: "interval", comparisonName: "Random blood sugar", comparisonUnit: "mg/dL", confidence: "medium", sourceText: "R.B.S 96.0" },
+    { test: "Creatinine", value: "0.3", unit: "mg/dL", refRange: "0.5–1.2", numericValue: 0.3, referenceLow: 0.5, referenceHigh: 1.2, referenceKind: "interval", comparisonName: "Creatinine", comparisonUnit: "mg/dL", confidence: "low", sourceText: "Creatinine 0.3" },
+    { test: "Haemoglobin", value: "13.6", unit: "g/dL", refRange: "12–16", numericValue: 13.6, referenceLow: 12, referenceHigh: 16, referenceKind: "interval", comparisonName: "Haemoglobin", comparisonUnit: "g/dL", confidence: "high", sourceText: "Haemoglobin g/dL 13.6" }
   ]
 };
 
@@ -37,8 +37,8 @@ const server = http.createServer(async (request, response) => {
       report: {
         outputLocale: input.locale || "en", isMedical: true, overall: "ok", headline: narrative,
         subline: narrative, reportType: narrative,
-        findings: [{ test: narrative, meaningShort: narrative, value: "96.0", unit: "", refRange: "", status: "normal", explain: "", confirmed: true }],
-        meaning: [narrative], questions: [narrative], lifestyle: [narrative], urgencyTitle: narrative, urgencyNote: narrative
+        findings: (input.extraction?.findings || extraction.findings).map((finding, index) => ({ ...finding, test: index ? finding.test : narrative, meaningShort: narrative, status: index === 2 ? "low" : "normal", explain: index === 2 ? narrative : "", confirmed: true })),
+        meaning: [narrative], questions: [narrative], lifestyle: [narrative], glossary: [{ term: narrative, definition: narrative }], urgencyTitle: narrative, urgencyNote: narrative
       }
     });
   }

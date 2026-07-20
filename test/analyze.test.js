@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import handler, {
+  attachExtractionMetadata,
   buildExtractionPrompt,
   buildPrompt,
   MAX_IMAGE_DATA_CHARS,
@@ -96,6 +97,18 @@ test("parseReport validates shape, locale, and target script", () => {
   assert.throws(() => parseReport(JSON.stringify(report("en")), "hi"), /Wrong output locale/);
   const wrongScript = { ...report("hi"), headline: SCRIPT_FIXTURES.en, subline: SCRIPT_FIXTURES.en, reportType: "Report", meaning: [SCRIPT_FIXTURES.en], questions: [SCRIPT_FIXTURES.en], urgencyTitle: SCRIPT_FIXTURES.en, urgencyNote: SCRIPT_FIXTURES.en };
   assert.throws(() => parseReport(JSON.stringify(wrongScript), "hi"), /Wrong output script/);
+});
+
+test("confirmed extraction remains authoritative for numeric visual metadata", () => {
+  const parsed = report("en");
+  parsed.findings = [{ test: "Translated test", value: "wrong", unit: "wrong", refRange: "wrong", status: "normal" }];
+  const extraction = normalizeExtraction({ findings: [{ test: "Hb", value: "12.5", unit: "g/dL", refRange: "12-16", numericValue: 12.5, referenceLow: 12, referenceHigh: 16, referenceKind: "interval", comparisonName: "Haemoglobin", comparisonUnit: "g/dL", confidence: "medium", confirmed: true }] });
+  const merged = attachExtractionMetadata(parsed, extraction);
+  assert.deepEqual(merged.findings[0], {
+    test: "Translated test", value: "12.5", unit: "g/dL", refRange: "12-16", status: "normal",
+    numericValue: 12.5, referenceLow: 12, referenceHigh: 16, referenceKind: "interval",
+    comparisonName: "Haemoglobin", comparisonUnit: "g/dL", confidence: "medium", confirmed: true
+  });
 });
 
 test("handler rejects unsupported methods and malformed requests", async () => {
