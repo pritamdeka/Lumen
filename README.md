@@ -20,6 +20,8 @@ Lumen translates. It does not diagnose.
 - **Dark mode**, follows system preference
 - **Local history** of the last 10 reports (stored in the browser only)
 - **Print / save as PDF** to bring to an appointment
+- **Natural read-aloud** through Azure neural speech, with a device-voice fallback
+- **Complete extraction-first results** so values are not dropped when an explanation is incomplete
 
 ## Architecture
 
@@ -62,7 +64,9 @@ Only `GEMINI_API_KEY` is required; any provider whose key is absent is skipped.
    | `GEMINI_API_KEY` | your Gemini key | yes |
    | `GROQ_API_KEY` | your Groq key | optional |
    | `DEEPINFRA_API_KEY` | your DeepInfra key | optional |
-   | `OPENROUTER_API_KEY` | your OpenRouter key | optional |
+| `OPENROUTER_API_KEY` | your OpenRouter key | optional |
+| `AZURE_SPEECH_KEY` | Azure Speech resource key | optional; enables natural narration |
+| `AZURE_SPEECH_REGION` | Azure region, for example `uksouth` | required with the speech key |
 
 5. Deploy. Done — no build step, no database.
 
@@ -76,6 +80,8 @@ vercel env add GEMINI_API_KEY
 vercel env add GROQ_API_KEY          # optional
 vercel env add DEEPINFRA_API_KEY     # optional
 vercel env add OPENROUTER_API_KEY    # optional
+vercel env add AZURE_SPEECH_KEY      # optional
+vercel env add AZURE_SPEECH_REGION   # required with speech key
 vercel --prod
 ```
 
@@ -86,9 +92,9 @@ cp .env.example .env        # fill in your keys
 vercel dev                  # serves on http://localhost:3000
 ```
 
-Run the zero-dependency test suite with `npm test`. All 13 languages are available in local and production builds. Non-English interface translations remain marked as drafts in `src/locales.js`; use `docs/translation-review.md` to record native-speaker sign-off.
+Run the zero-dependency test suite with `npm test`. The existing 13 languages remain available. Spanish, French, German, Italian, and European Portuguese are included as disabled drafts until native-speaker sign-off in `docs/translation-review.md`.
 
-Analysis uses two stages: the first request extracts visible values and assigns legibility confidence; medium- and low-confidence values are shown in an editable confirmation screen. Only confirmed extraction data is sent in the second request that generates the explanation.
+Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 
 Opening `index.html` directly as a file will not work — `/api/analyze` needs the Vercel runtime.
 
@@ -122,6 +128,7 @@ The UI reinforces this with a persistent disclaimer and framing throughout ("not
 - Images are sent to the AI provider for analysis and are **not stored** on the server
 - No database, no accounts, no analytics
 - History is stored in the browser's `localStorage` only, and can be cleared in one tap
+- Hosted narration is opt-in. Only explanation text—not the report image—is sent to Azure Speech, and generated audio is kept in memory only.
 - Rate limiting: 20 requests per minute per IP
 
 ---

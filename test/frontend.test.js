@@ -44,7 +44,7 @@ test("frontend uses one accessible language picker and report dashboard", async 
   assert.match(html, /id="languageOptions" role="radiogroup"/);
   assert.match(html, /id="langChips"/);
   assert.match(html, /function renderLangChips\(\)/);
-  assert.match(html, /\[\["all","all"\],\["outside","outsideRange"\]\]/);
+  assert.match(html, /\[\["all","all"\],\["outside","outsideRange"\],\["uncertain","uncertain"\],\["confirmed","confirmed"\]\]/);
   assert.match(html, /showModal\(\)/);
   assert.match(html, /role="tablist"/);
   assert.match(html, /id="summaryViz"/);
@@ -60,4 +60,9 @@ test("frontend includes visit toolkit accessibility fallbacks", async () => {
   assert.match(html, /type="date"/);
   assert.match(html, /setAttribute\("role","img"\)/);
   assert.match(html, /className="data-table"/);
+  assert.match(html, /fetch\("\/api\/speech"/);
+  assert.match(html, /id="audioProgress"/);
+  assert.match(html, /lumen_speech_consent/);
+  assert.match(html, /id="expandAllBtn"/);
+  assert.match(html, /id="attentionJump"/);
 });

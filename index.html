@@ -138,6 +138,8 @@
   .chip-status.low,.chip-status.high,.chip-status.borderline{background:var(--amber-soft);color:var(--amber)}
   .chip-status.critical{background:var(--red-soft);color:var(--red)}
   .finding-detail{font-size:.85rem;color:var(--ink-soft);padding:0 0 16px;display:grid;gap:12px}
+  .finding-original{font-size:.76rem;color:var(--ink-faint);border-inline-start:3px solid var(--line);padding-inline-start:10px}
+  .chip-status.uninterpreted{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
 
   .prose p{margin-bottom:12px;font-size:.95rem}
   .prose p:last-child{margin-bottom:0}
@@ -165,6 +167,8 @@
   .filterbar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
   .filterbtn{border:1px solid var(--line);background:transparent;color:var(--ink-soft);border-radius:999px;padding:7px 11px;font:inherit;font-size:.75rem;font-weight:650;cursor:pointer}
   .filterbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+  .results-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}.results-count{font-size:.8rem;color:var(--ink-soft)}.expand-controls{display:flex;gap:7px}.expand-controls button{margin:0}
+  .attention-jump{position:sticky;bottom:14px;z-index:4;display:none;margin:14px auto 0;border:1px solid var(--amber);background:var(--surface);color:var(--amber);box-shadow:var(--shadow);border-radius:999px;padding:9px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
   .summary-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
   .summary-item{padding:12px 13px;background:var(--surface-2);border-radius:11px;border:1px solid var(--line-soft)}
   .summary-item strong{display:block;font-size:1.35rem;line-height:1.1}
@@ -182,6 +186,7 @@
   .glossary-list{display:grid;gap:8px}.glossary-item{border:1px solid var(--line);border-radius:11px;padding:0 13px}.glossary-item summary{padding:11px 0;font-weight:650;cursor:pointer}.glossary-item p{padding:0 0 12px;color:var(--ink-soft);font-size:.87rem}
   .toolkit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.tool{padding:16px;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:12px}.tool h4{font-size:.9rem;margin-bottom:8px}.tool p{font-size:.78rem;color:var(--ink-soft)}
   .tool button{margin-top:10px}.reminder-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.reminder-row label{display:grid;gap:4px;font-size:.75rem;color:var(--ink-soft);flex:1}.reminder-row input{min-width:150px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;padding:9px;font:inherit}
+  .audio-controls{display:flex;gap:7px;flex-wrap:wrap}.audio-controls .copybtn{margin-top:8px}.audio-progress{width:100%;height:6px;accent-color:var(--teal);margin-top:10px}.audio-section{min-height:1.2em}.audio-disclosure{margin-top:8px}
   #persistentUrgency{display:none;margin-top:14px;padding:15px 18px;border:1px solid var(--red);border-radius:12px;background:var(--red-soft)}#persistentUrgency strong{display:block}#persistentUrgency p{font-size:.86rem;margin-top:2px}
 
   /* history */
@@ -198,7 +203,7 @@
   .disclaimer b{color:var(--ink)}
 
   @media print{
-    nav,.hero,.langbar,.uploader,#status,.actions,#history,.iconbtn,.report-tabs,.filterbar,#readBtn,.reminder-row{display:none!important}
+    nav,.hero,.langbar,.uploader,#status,.actions,#history,.iconbtn,.report-tabs,.filterbar,.audio-controls,.audio-progress,.reminder-row,.attention-jump{display:none!important}
     body{background:#fff;color:#000}
     .card{box-shadow:none;border-color:#ddd;break-inside:avoid}
     .tab-panel[hidden]{display:block!important}.tab-panel{display:block!important}.section{margin-top:12px}.toolkit{display:block}.tool{margin-top:10px}
@@ -283,8 +288,10 @@
     <section class="tab-panel" id="panelResults" role="tabpanel" aria-labelledby="tabResults" hidden>
       <div class="card section reveal" id="secFindings">
         <h3 id="hFindings">Your numbers</h3>
+        <div class="results-tools"><p class="results-count" id="resultsCount" aria-live="polite"></p><div class="expand-controls"><button class="copybtn" id="expandAllBtn" type="button">Expand all</button><button class="copybtn" id="collapseAllBtn" type="button">Collapse all</button></div></div>
         <div class="filterbar" id="findingFilters" aria-label="Filter results"></div>
         <div id="findings"></div>
+        <button class="attention-jump" id="attentionJump" type="button">Needs attention</button>
       </div>
     </section>
 
@@ -297,7 +304,7 @@
       <div class="card section reveal" id="secLifestyle"><h3 id="hLifestyle">General wellbeing notes</h3><div class="llist" id="lifestyle"></div></div>
       <div class="card section urgency reveal" id="secUrgency"><h3 style="margin-bottom:8px" id="uTitle"></h3><p id="uNote"></p></div>
       <div class="card section reveal" id="secToolkit"><h3 id="toolkitTitle">Visit toolkit</h3><div class="toolkit">
-        <div class="tool"><h4 id="readTitle">Read aloud</h4><p id="speechStatus" role="status"></p><button class="copybtn" id="readBtn"><span data-icon="volume"></span> <span id="readLbl">Read aloud</span></button></div>
+        <div class="tool"><h4 id="readTitle">Read aloud</h4><p class="audio-section" id="audioSection"></p><p id="speechStatus" role="status"></p><progress class="audio-progress" id="audioProgress" max="1" value="0"></progress><div class="audio-controls"><button class="copybtn" id="readBtn"><span data-icon="volume"></span> <span id="readLbl">Play</span></button><button class="copybtn" id="restartAudioBtn" type="button">Restart</button></div><p class="audio-disclosure" id="audioDisclosure"></p></div>
         <div class="tool"><h4 id="doctorSummaryTitle">Doctor visit summary</h4><button class="copybtn" id="printBtn"><span data-icon="print"></span> <span id="printLbl">Save as PDF</span></button></div>
         <div class="tool" style="grid-column:1/-1"><h4 id="reminderTitle">Follow-up reminder</h4><div class="reminder-row"><label><span id="reminderDateLbl">Reminder date</span><input id="reminderDate" type="date"></label><button class="copybtn" id="calendarBtn"><span data-icon="calendar"></span> <span id="calendarLbl">Add to calendar</span></button></div><p id="reminderStatus" role="status"></p></div>
       </div></div>
@@ -325,7 +332,8 @@
 <script type="module">
 "use strict";
 import { DEFAULT_LOCALE, LOCALES, getLocale, translate } from "./src/locales.js";
-import { buildTrendSeries, createReminderIcs, filterFindings, rangePosition, speechText, statusGroup, summarizeFindings } from "./src/report-tools.js";
+import { buildTrendSeries, createReminderIcs, filterFindings, rangePosition, statusGroup, summarizeFindings } from "./src/report-tools.js";
+import { bestDeviceVoice, buildNarrationSections, splitNarrationSections } from "./src/speech.js";
 import { postAnalysis } from "./src/http.js";
 const $=id=>document.getElementById(id);
 
@@ -363,14 +371,14 @@ function renderLangChips(){
   LANGS.forEach(L=>{const b=document.createElement("button");b.type="button";b.className="chip"+(L.code===currentLang?" active":"");b.textContent=L.label;b.lang=L.code;b.dir=L.dir;b.setAttribute("aria-pressed",String(L.code===currentLang));b.onclick=()=>chooseLanguage(L.code);box.appendChild(b);});
 }
 async function chooseLanguage(code,closeDialog=false){
-  const previous=currentLang,changed=code!==currentLang,scrollTop=window.scrollY;setLang(code);if(closeDialog&&$("languageDialog").open)$("languageDialog").close();
+  const previous=currentLang,changed=code!==currentLang,scrollTop=window.scrollY;if(changed)stopAudio(true);setLang(code);if(closeDialog&&$("languageDialog").open)$("languageDialog").close();
   if(changed&&lastExtraction&&$("results").style.display==="block"){const translated=await requestExplanation(lastExtraction,"translating",true);if(!translated)setLang(previous);window.scrollTo({top:scrollTop});}
 }
 function setLang(code){
   currentLang=getLocale(code).code;
   try{localStorage.setItem("lumen_lang",currentLang);}catch(e){}
   const L=getLocale(currentLang);
-  document.body.classList.toggle("lang-indic",currentLang!=="en");
+  document.body.classList.toggle("lang-indic",L.script!=="Latin");
   document.body.classList.toggle("lang-ur",currentLang==="ur");
   document.documentElement.lang=currentLang;
   document.documentElement.dir=L.dir;
@@ -412,7 +420,8 @@ function applyUIStrings(){
   $("disclaimerBody").textContent=t("disclaimerBody");
   $("tabOverviewLbl").textContent=t("overview");$("tabResultsLbl").textContent=t("findings");$("tabQuestionsLbl").textContent=t("questions");$("tabNextLbl").textContent=t("nextSteps");
   $("summaryTitle").textContent=t("summary");$("trendsTitle").textContent=t("trends");$("glossaryTitle").textContent=t("glossary");$("toolkitTitle").textContent=t("visitToolkit");
-  $("readTitle").textContent=t("readAloud");$("readLbl").textContent=t("readAloud");$("doctorSummaryTitle").textContent=t("doctorSummary");$("reminderTitle").textContent=t("followUpReminder");$("reminderDateLbl").textContent=t("reminderDate");$("calendarLbl").textContent=t("addToCalendar");
+  $("readTitle").textContent=t("readAloud");$("readLbl").textContent=t("playAudio");$("doctorSummaryTitle").textContent=t("doctorSummary");$("reminderTitle").textContent=t("followUpReminder");$("reminderDateLbl").textContent=t("reminderDate");$("calendarLbl").textContent=t("addToCalendar");
+  $("expandAllBtn").textContent=t("expandAll");$("collapseAllBtn").textContent=t("collapseAll");$("attentionJump").textContent=t("needsAttention");$("restartAudioBtn").textContent=t("restartAudio");$("audioDisclosure").textContent=t("audioDisclosure");
   renderFindingFilters();
   renderThumbs();
 }
@@ -529,7 +538,7 @@ let lastReport=null;
 let lastExtraction=null;
 let currentAnalysisId=null;
 
-const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",no_provider:"requestFailed",rate_limited:"requestFailed"};
+const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",too_many_findings:"tooManyFindings",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",no_provider:"requestFailed",rate_limited:"requestFailed"};
 async function apiRequest(payload){
   try{return await postAnalysis(fetch,"/api/analyze",payload);}
   catch(error){const key=ERROR_KEYS[error?.code]||"requestFailed";throw new Error(t(key));}
@@ -576,7 +585,7 @@ TAB_IDS.forEach((id,index)=>{$("tab"+id).onclick=()=>activateTab(id);$("tab"+id)
 let activeFindingFilter="all";
 function renderFindingFilters(){
   const box=$("findingFilters");if(!box)return;box.textContent="";
-  [["all","all"],["outside","outsideRange"]].forEach(([value,key])=>{const b=document.createElement("button");b.type="button";b.className="filterbtn";b.setAttribute("aria-pressed",String(value===activeFindingFilter));b.textContent=t(key);b.onclick=()=>{activeFindingFilter=value;renderFindingFilters();if(lastReport)renderFindings(lastReport.findings||[]);};box.appendChild(b);});
+  [["all","all"],["outside","outsideRange"],["uncertain","uncertain"],["confirmed","confirmed"]].forEach(([value,key])=>{const b=document.createElement("button");b.type="button";b.className="filterbtn";b.setAttribute("aria-pressed",String(value===activeFindingFilter));b.textContent=t(key);b.onclick=()=>{activeFindingFilter=value;renderFindingFilters();if(lastReport)renderFindings(lastReport.findings||[]);};box.appendChild(b);});
 }
 function renderStatusIcon(target,status){target.textContent="";target.appendChild(icon(status,status));}
 function renderSummary(findings){
@@ -595,12 +604,17 @@ function createRangeViz(finding){
 }
 function renderFindings(findings){
   const f=$("findings");f.textContent="";const filtered=filterFindings(findings,activeFindingFilter);$("secFindings").style.display=findings.length?"block":"none";
-  filtered.forEach(x=>{const st=["normal","low","high","borderline","critical"].includes(x.status)?x.status:"borderline";const wrap=document.createElement("details");wrap.className="finding-wrap";
+  $("resultsCount").textContent=`${filtered.length} / ${findings.length} ${t("findings").toLocaleLowerCase(currentLang)} · ${t("all")} ${findings.length}`;
+  filtered.forEach(x=>{const st=["normal","low","high","borderline","critical","uninterpreted"].includes(x.status)?x.status:"uninterpreted";const wrap=document.createElement("details");wrap.className="finding-wrap";wrap.dataset.status=st;
     const row=document.createElement("summary");row.className="finding";row.innerHTML='<div class="name"><b></b><span></span></div><div class="val"><span class="v"></span><small></small></div><span class="chip-status"></span>';
-    row.querySelector(".name b").textContent=x.test||"";row.querySelector(".name span").textContent=x.meaningShort||"";row.querySelector(".val .v").textContent=(x.value||"")+(x.unit?" "+x.unit:"");row.querySelector(".val small").textContent=x.refRange?(t("reference")+": "+x.refRange):"";
-    const c=row.querySelector(".chip-status");c.classList.add(st);c.textContent=t(st);const detail=document.createElement("div");detail.className="finding-detail";if(x.explain){const p=document.createElement("p");p.textContent=x.explain;detail.appendChild(p);}const visual=createRangeViz(x);if(visual)detail.appendChild(visual);wrap.append(row,detail);f.appendChild(wrap);
+    row.querySelector(".name b").textContent=x.test||"";row.querySelector(".name span").textContent=[x.meaningShort,x.sourcePage?`${t("page")} ${x.sourcePage}`:""].filter(Boolean).join(" · ");row.querySelector(".val .v").textContent=(x.value||"")+(x.unit?" "+x.unit:"");row.querySelector(".val small").textContent=x.refRange?(t("reference")+": "+x.refRange):"";
+    const c=row.querySelector(".chip-status");c.classList.add(st);c.textContent=st==="uninterpreted"?t("uncertain"):t(st);const detail=document.createElement("div");detail.className="finding-detail";const p=document.createElement("p");p.textContent=x.explain||t("uninterpreted");detail.appendChild(p);if(x.originalTest&&x.originalTest!==x.test){const original=document.createElement("p");original.className="finding-original";original.textContent=`${t("report")}: ${x.originalTest}`;detail.appendChild(original);}const visual=createRangeViz(x);if(visual)detail.appendChild(visual);wrap.append(row,detail);f.appendChild(wrap);
   });
+  const firstAttention=f.querySelector('[data-status="critical"],[data-status="high"],[data-status="low"],[data-status="borderline"],[data-status="uninterpreted"]');$("attentionJump").style.display=firstAttention?"block":"none";
 }
+$("expandAllBtn").onclick=()=>document.querySelectorAll("#findings details").forEach(item=>item.open=true);
+$("collapseAllBtn").onclick=()=>document.querySelectorAll("#findings details").forEach(item=>item.open=false);
+$("attentionJump").onclick=()=>{const target=$("findings").querySelector('[data-status="critical"],[data-status="high"],[data-status="low"],[data-status="borderline"],[data-status="uninterpreted"]');if(target){target.open=true;target.scrollIntoView({behavior:"smooth",block:"center"});target.querySelector("summary")?.focus();}};
 function renderTrends(findings){
   const box=$("trends");box.textContent="";let shown=0;const history=loadHist();
   findings.forEach(finding=>{const series=buildTrendSeries(history,finding);if(series.length<2||shown>=4)return;shown++;const card=document.createElement("div");card.className="trend-card";const title=document.createElement("h4");title.textContent=finding.test;card.appendChild(title);
@@ -690,21 +704,42 @@ $("copyQ").onclick=async()=>{
   }catch(e){}
 };
 $("printBtn").onclick=()=>window.print();
-let speaking=false;
-$("readBtn").onclick=()=>{
-  if(!("speechSynthesis" in window)||!lastReport){$("speechStatus").textContent=t("speechUnavailable");return;}
-  if(speaking){window.speechSynthesis.cancel();speaking=false;$("readLbl").textContent=t("readAloud");return;}
-  const voices=window.speechSynthesis.getVoices(),prefix=currentLang.toLowerCase(),voice=voices.find(item=>item.lang.toLowerCase()===prefix||item.lang.toLowerCase().startsWith(prefix+"-"));
-  if(!voice){$("speechStatus").textContent=t("speechUnavailable");return;}
-  const utterance=new SpeechSynthesisUtterance(speechText(lastReport));utterance.lang=voice.lang;utterance.voice=voice;utterance.onend=utterance.onerror=()=>{speaking=false;$("readLbl").textContent=t("readAloud");};speaking=true;$("speechStatus").textContent="";$("readLbl").textContent=t("stopReading");window.speechSynthesis.speak(utterance);
-};
+const reportAudio=new Audio();
+let audioMode="idle",audioChunks=[],audioUrls=[],audioIndex=0,deviceUtterance=null;
+function narrationLabels(){return {overview:t("overview"),findings:t("findings"),questions:t("questions"),disclaimerTitle:t("disclaimerTitle"),disclaimer:t("disclaimerBody"),reference:t("reference"),result:t("report"),normal:t("normal"),low:t("low"),high:t("high"),borderline:t("borderline"),critical:t("critical"),uninterpreted:t("uninterpreted")};}
+function updateAudioUi(){const playing=audioMode==="hosted"&&!reportAudio.paused||audioMode==="device"&&!(window.speechSynthesis?.paused);$("readLbl").textContent=playing?t("pauseAudio"):t("playAudio");$("audioSection").textContent=audioChunks[audioIndex]?.title||"";}
+function revokeAudio(){reportAudio.removeAttribute("src");reportAudio.load();audioUrls.forEach(url=>URL.revokeObjectURL(url));audioUrls=[];}
+function stopAudio(reset=false){reportAudio.pause();if("speechSynthesis" in window)window.speechSynthesis.cancel();deviceUtterance=null;if(reset){revokeAudio();audioChunks=[];audioIndex=0;$("audioProgress").value=0;$("audioSection").textContent="";}audioMode="idle";updateAudioUi();}
+async function hostedAudio(chunks){
+  const urls=[];
+  try{for(const chunk of chunks){const response=await fetch("/api/speech",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({locale:currentLang,text:chunk.text})});if(!response.ok)throw new Error("speech");urls.push(URL.createObjectURL(await response.blob()));}return urls;}
+  catch(e){urls.forEach(url=>URL.revokeObjectURL(url));return null;}
+}
+function playHosted(index=audioIndex){if(!audioUrls[index]){stopAudio();$("audioProgress").value=1;return;}audioIndex=index;audioMode="hosted";reportAudio.src=audioUrls[index];reportAudio.play().then(updateAudioUi).catch(()=>fallbackDevice());}
+function speakDevice(index=audioIndex){
+  if(!("speechSynthesis" in window)){stopAudio();$("speechStatus").textContent=t("speechUnavailable");return;}
+  const voice=bestDeviceVoice(window.speechSynthesis.getVoices(),currentLang);if(!voice){stopAudio();$("speechStatus").textContent=t("speechUnavailable");return;}
+  if(!audioChunks[index]){stopAudio();$("audioProgress").value=1;return;}audioIndex=index;deviceUtterance=new SpeechSynthesisUtterance(audioChunks[index].text);deviceUtterance.lang=voice.lang;deviceUtterance.voice=voice;deviceUtterance.rate=.95;deviceUtterance.onend=()=>{audioIndex++;$("audioProgress").value=audioIndex/Math.max(audioChunks.length,1);speakDevice(audioIndex);};deviceUtterance.onerror=()=>{stopAudio();$("speechStatus").textContent=t("speechUnavailable");};audioMode="device";window.speechSynthesis.speak(deviceUtterance);updateAudioUi();
+}
+function fallbackDevice(){revokeAudio();$("speechStatus").textContent="";speakDevice(0);}
+async function startNarration(){
+  if(!lastReport)return;stopAudio(true);audioChunks=splitNarrationSections(buildNarrationSections(lastReport,narrationLabels()));if(!audioChunks.length)return;
+  let consent=null;try{consent=localStorage.getItem("lumen_speech_consent");}catch(e){}
+  if(!consent){consent=window.confirm(t("audioConsent"))?"azure":"device";try{localStorage.setItem("lumen_speech_consent",consent);}catch(e){}}
+  if(consent==="device"){fallbackDevice();return;}
+  $("speechStatus").textContent=t("audioLoading");audioUrls=await hostedAudio(audioChunks);$("speechStatus").textContent="";if(audioUrls)playHosted(0);else fallbackDevice();
+}
+reportAudio.onended=()=>{audioIndex++;$("audioProgress").value=audioIndex/Math.max(audioChunks.length,1);playHosted(audioIndex);};
+reportAudio.ontimeupdate=()=>{const part=Number.isFinite(reportAudio.duration)&&reportAudio.duration?reportAudio.currentTime/reportAudio.duration:0;$("audioProgress").value=(audioIndex+part)/Math.max(audioChunks.length,1);};
+$("readBtn").onclick=()=>{if(audioMode==="hosted"){if(reportAudio.paused)reportAudio.play();else reportAudio.pause();updateAudioUi();return;}if(audioMode==="device"){if(window.speechSynthesis.paused)window.speechSynthesis.resume();else window.speechSynthesis.pause();updateAudioUi();return;}startNarration();};
+$("restartAudioBtn").onclick=()=>{stopAudio(true);startNarration();};
 $("calendarBtn").onclick=()=>{
   const date=$("reminderDate").value;if(!date){$("reminderStatus").textContent=t("selectDate");return;}
   try{const content=createReminderIcs({date,title:t("followUpReminder")+(lastReport?.reportType?": "+lastReport.reportType:""),description:(lastReport?.questions||[]).join("\n")});const url=URL.createObjectURL(new Blob([content],{type:"text/calendar;charset=utf-8"}));const link=document.createElement("a");link.href=url;link.download="lumen-follow-up.ics";link.click();setTimeout(()=>URL.revokeObjectURL(url),0);$("reminderStatus").textContent="";}catch(e){$("reminderStatus").textContent=t("selectDate");}
 };
 $("newBtn").onclick=()=>{
   $("results").style.display="none";pages=[];lastReport=null;lastExtraction=null;
-  currentAnalysisId=null;if("speechSynthesis" in window)window.speechSynthesis.cancel();speaking=false;
+  currentAnalysisId=null;stopAudio(true);
   renderThumbs();fileIn.value="";updateGo();setStatus("");
   window.scrollTo({top:0,behavior:"smooth"});
 };

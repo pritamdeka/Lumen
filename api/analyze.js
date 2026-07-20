@@ -3,6 +3,7 @@ import { getLocale, hasExpectedScript, localeFromLegacyPrompt, LOCALES } from ".
 export const config = { maxDuration: 60 };
 export const MAX_PAGES = 5;
 export const MAX_IMAGE_DATA_CHARS = 4_000_000;
+export const MAX_FINDINGS = 250;
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const HITS = new Map();
@@ -33,7 +34,7 @@ Respond with ONLY valid JSON, no markdown fences:
 {
  "isMedical": true,
  "reportType": "document type exactly as visible",
- "findings": [{"test":"visible label","value":"visible value","unit":"visible unit or empty","refRange":"visible range or empty","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name","comparisonUnit":"normalized visible unit","confidence":"high|medium|low","sourceText":"short verbatim text supporting the extraction"}]
+ "findings": [{"sourceIndex":0,"sourcePage":1,"test":"visible label","value":"visible value","unit":"visible unit or empty","refRange":"visible range or empty","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name","comparisonUnit":"normalized visible unit","confidence":"high|medium|low","sourceText":"short verbatim text supporting the extraction"}]
 }`;
 }
 
@@ -51,6 +52,7 @@ Safety rules:
 - Never suggest medication changes.
 - If any value looks critically abnormal, set overall to "urgent" and advise prompt medical contact.
 - Preserve numbers, units, medicine names, and reference ranges exactly as visible.
+- Return exactly one finding for every extracted finding, in any order, and copy its findingId exactly.
 
 Respond with ONLY valid JSON, no markdown fences:
 {
@@ -60,7 +62,7 @@ Respond with ONLY valid JSON, no markdown fences:
  "headline": "one warm sentence in the requested language (max 18 words)",
  "subline": "one sentence in the requested language (max 20 words)",
  "reportType": "document type in the requested language",
- "findings": [{"test":"localized name","meaningShort":"plain meaning","value":"original display value","unit":"original unit","refRange":"original range if shown","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name from extracted data","comparisonUnit":"normalized original unit","confidence":"high|medium|low","status":"normal|low|high|borderline|critical","explain":"one plain sentence for non-normal values, otherwise empty","confirmed":false}],
+ "findings": [{"findingId":"copy exact ID from extracted data","test":"localized name","meaningShort":"plain meaning","value":"original display value","unit":"original unit","refRange":"original range if shown","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name from extracted data","comparisonUnit":"normalized original unit","confidence":"high|medium|low","status":"normal|low|high|borderline|critical","explain":"one plain sentence for non-normal values, otherwise empty","confirmed":false}],
  "meaning": ["2-4 short paragraphs in the requested language"],
  "questions": ["4-6 questions in the requested language referencing actual values"],
  "lifestyle": ["2-4 gentle general wellbeing suggestions; never medication advice"],
@@ -93,15 +95,23 @@ async function readProviderJson(response, providerName) {
 }
 
 export function normalizeExtraction(value) {
-  if (!value || typeof value !== "object" || !Array.isArray(value.findings) || value.findings.length > 100) {
+  if (!value || typeof value !== "object" || !Array.isArray(value.findings)) {
     const error = new Error("Invalid extraction data");
     error.code = "invalid_extraction";
+    throw error;
+  }
+  if (value.findings.length > MAX_FINDINGS) {
+    const error = new Error("Report contains too many findings");
+    error.code = "too_many_findings";
     throw error;
   }
   return {
     isMedical: value.isMedical !== false,
     reportType: cleanText(value.reportType),
-    findings: value.findings.map(finding => ({
+    findings: value.findings.map((finding, index) => ({
+      findingId: `finding-${index + 1}`,
+      sourceIndex: index,
+      sourcePage: Number.isInteger(Number(finding?.sourcePage)) && Number(finding.sourcePage) > 0 ? Number(finding.sourcePage) : null,
       test: cleanText(finding?.test),
       value: cleanText(finding?.value),
       unit: cleanText(finding?.unit, 80),
@@ -138,7 +148,7 @@ export function normalizeRequest(body) {
     localeCode = localeFromLegacyPrompt(value.language);
   }
   if (localeCode === undefined) localeCode = "en";
-  if (typeof localeCode !== "string" || !LOCALES.some(locale => locale.code === localeCode)) {
+  if (typeof localeCode !== "string" || !LOCALES.some(locale => locale.code === localeCode && locale.enabled)) {
     const error = new Error("Unsupported locale");
     error.code = "unsupported_locale";
     throw error;
@@ -235,7 +245,9 @@ export function parseReport(text, localeCode = "en") {
     throw new Error("Invalid report shape");
   }
   if (report.outputLocale !== localeCode) throw new Error("Wrong output locale");
-  report.findings = Array.isArray(report.findings) ? report.findings.slice(0, 100).map(finding => ({
+  if (Array.isArray(report.findings) && report.findings.length > MAX_FINDINGS) throw new Error("Too many report findings");
+  report.findings = Array.isArray(report.findings) ? report.findings.map(finding => ({
+    findingId: cleanText(finding?.findingId, 80),
     test: cleanText(finding?.test), meaningShort: cleanText(finding?.meaningShort, 300),
     value: cleanText(finding?.value), unit: cleanText(finding?.unit, 80), refRange: cleanText(finding?.refRange, 120),
     numericValue: cleanNumber(finding?.numericValue), referenceLow: cleanNumber(finding?.referenceLow), referenceHigh: cleanNumber(finding?.referenceHigh),
@@ -255,12 +267,30 @@ export function parseReport(text, localeCode = "en") {
 }
 
 export function attachExtractionMetadata(report, extraction) {
-  if (!extraction?.findings?.length) return report;
-  report.findings = (report.findings || []).map((finding, index) => {
-    const source = extraction.findings[index];
-    if (!source) return finding;
+  if (!extraction?.findings?.length) {
+    report.totalFindings = report.findings?.length || 0;
+    report.explainedFindings = report.findings?.length || 0;
+    report.incompleteExplanations = 0;
+    return report;
+  }
+  const explanations = new Map();
+  for (const finding of report.findings || []) {
+    if (finding.findingId && !explanations.has(finding.findingId)) explanations.set(finding.findingId, finding);
+  }
+  let explainedFindings = 0;
+  report.findings = extraction.findings.map(source => {
+    const explanation = explanations.get(source.findingId);
+    if (explanation) explainedFindings++;
     return {
-      ...finding,
+      ...(explanation || {}),
+      findingId: source.findingId,
+      sourceIndex: source.sourceIndex,
+      sourcePage: source.sourcePage,
+      test: explanation?.test || source.test,
+      originalTest: source.test,
+      meaningShort: explanation?.meaningShort || "",
+      status: explanation?.status || "uninterpreted",
+      explain: explanation?.explain || "",
       value: source.value,
       unit: source.unit,
       refRange: source.refRange,
@@ -274,6 +304,9 @@ export function attachExtractionMetadata(report, extraction) {
       confirmed: source.confirmed === true
     };
   });
+  report.totalFindings = report.findings.length;
+  report.explainedFindings = explainedFindings;
+  report.incompleteExplanations = report.findings.length - explainedFindings;
   return report;
 }
 
@@ -305,7 +338,7 @@ export default async function handler(req, res) {
   try {
     input = normalizeRequest(body);
   } catch (error) {
-    const status = error.code === "payload_too_large" ? 413 : 400;
+    const status = ["payload_too_large", "too_many_findings"].includes(error.code) ? 413 : 400;
     sendError(res, status, error.code || "invalid_request", error.message);
     return;
   }

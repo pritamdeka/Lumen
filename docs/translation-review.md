@@ -1,6 +1,6 @@
 # Translation Review Checklist
 
-All non-English interface translations are available but remain marked as drafts until a native reviewer signs off. Update `reviewed` in `src/locales.js` only after completing this checklist; the flag records review status and does not hide the language.
+All non-English interface translations remain drafts until a native reviewer signs off. Update `reviewed` only after completing this checklist. The five European drafts also remain disabled until review; set their `enabled` metadata to `true` only at sign-off.
 
 | Locale | Language | Reviewer | Date | Status |
 |---|---|---|---|---|
@@ -17,6 +17,11 @@ All non-English interface translations are available but remain marked as drafts
 | `pa` | Punjabi (Gurmukhi) | — | — | Draft |
 | `or` | Odia | — | — | Draft |
 | `ur` | Urdu | — | — | Draft |
+| `es` | Spanish | — | — | Draft · disabled |
+| `fr` | French | — | — | Draft · disabled |
+| `de` | German | — | — | Draft · disabled |
+| `it` | Italian | — | — | Draft · disabled |
+| `pt-PT` | European Portuguese | — | — | Draft · disabled |
 
 For each locale, verify:
 
@@ -25,3 +30,4 @@ For each locale, verify:
 - Long text wraps at 320 px width and remains readable in light and dark themes.
 - Print output is legible; Urdu direction and mixed-direction numbers/units are correct.
 - Keyboard focus order, accessible names, and screen-reader reading order remain logical.
+- Azure narration clearly pronounces test names, decimals, ranges, and units; the mapped voice matches the locale.

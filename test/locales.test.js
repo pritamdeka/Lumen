@@ -11,10 +11,11 @@ import {
 } from "../src/locales.js";
 import { SCRIPT_FIXTURES } from "../test-fixtures/scripts.js";
 
-test("defines 13 unique, enabled locales", () => {
-  assert.equal(LOCALES.length, 13);
-  assert.equal(new Set(LOCALES.map(locale => locale.code)).size, 13);
+test("defines 13 enabled and five draft European locales", () => {
+  assert.equal(LOCALES.length, 18);
+  assert.equal(new Set(LOCALES.map(locale => locale.code)).size, 18);
   assert.equal(getEnabledLocales().length, 13);
+  assert.deepEqual(LOCALES.filter(locale => !locale.enabled).map(locale => locale.code), ["es", "fr", "de", "it", "pt-PT"]);
 });
 
 test("every locale provides every required UI string", () => {
@@ -38,14 +39,15 @@ test("locale metadata has the expected writing direction and script", () => {
   for (const locale of LOCALES) {
     assert.ok(locale.prompt);
     assert.ok(locale.script);
-    assert.equal(hasExpectedScript(SCRIPT_FIXTURES[locale.code], locale.code), true, locale.code);
+    const fixture = SCRIPT_FIXTURES[locale.code] || locale.ui.heroTitle;
+    assert.equal(hasExpectedScript(fixture, locale.code), true, locale.code);
     assert.equal(locale.dir, locale.code === "ur" ? "rtl" : "ltr");
   }
 });
 
 test("review filtering exposes only signed-off translations", () => {
   assert.deepEqual(getEnabledLocales({ reviewedOnly: true }).map(locale => locale.code), ["en"]);
-  assert.equal(LOCALES.filter(locale => !locale.reviewed).length, 12);
+  assert.equal(LOCALES.filter(locale => !locale.reviewed).length, 17);
 });
 
 test("localized clinical status labels are present", () => {
