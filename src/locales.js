@@ -1,0 +1,133 @@
+export const REQUIRED_UI_KEYS = [
+  "eyebrow", "heroTitle", "heroEmphasis", "heroBody", "neverStored",
+  "languages", "notDiagnosis", "language", "explain", "drop", "uploadHint",
+  "findings", "meaning", "questions", "lifestyle", "copyQuestions", "savePdf",
+  "changeLanguage", "newReport", "recentReports", "clearHistory", "noReports",
+  "disclaimerTitle", "disclaimerBody", "reading", "translating", "copied",
+  "invalidFiles", "uploadFirst", "tooManyPages", "payloadTooLarge", "remove",
+  "page", "reference", "report", "normal", "low", "high", "borderline", "critical"
+];
+
+const en = {
+  eyebrow: "Private · No sign-up", heroTitle: "Your medical report,", heroEmphasis: "finally in plain words.",
+  heroBody: "Upload a lab report or prescription. Lumen explains every value and prepares questions for your doctor.",
+  neverStored: "Never stored", languages: "languages", notDiagnosis: "Not a diagnosis — a translation", language: "Language",
+  explain: "Explain my report", drop: "Drop your report here", uploadHint: "Lab report, prescription, or discharge summary · JPG or PNG · up to 5 pages",
+  findings: "Your numbers", meaning: "What this means", questions: "Ask your doctor", lifestyle: "General wellbeing notes",
+  copyQuestions: "Copy questions", savePdf: "Save as PDF", changeLanguage: "Change language", newReport: "New report",
+  recentReports: "Recent reports", clearHistory: "Clear history", noReports: "No saved reports yet.",
+  disclaimerTitle: "Lumen is not a doctor.", disclaimerBody: "It explains medical documents to support conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician. Images are sent to the selected AI provider for analysis and are not stored on our servers.",
+  reading: "Reading your report…", translating: "Translating…", copied: "✓ Copied", invalidFiles: "Please upload JPG or PNG images.",
+  uploadFirst: "Upload a report first.", tooManyPages: "You can upload up to 5 pages.", payloadTooLarge: "The pages are too large. Remove a page or use clearer, smaller images.",
+  remove: "Remove", page: "Page", reference: "ref", report: "Report", normal: "normal", low: "low", high: "high", borderline: "borderline", critical: "critical"
+};
+
+const translations = {
+  hi: {
+    eyebrow: "निजी · साइन-अप नहीं", heroTitle: "आपकी मेडिकल रिपोर्ट,", heroEmphasis: "अब आसान शब्दों में।", heroBody: "लैब रिपोर्ट या पर्चा अपलोड करें। Lumen हर मान समझाता है और डॉक्टर से पूछने के प्रश्न तैयार करता है।", neverStored: "कभी संग्रहीत नहीं", languages: "भाषाएँ", notDiagnosis: "निदान नहीं — केवल सरल व्याख्या", language: "भाषा", explain: "मेरी रिपोर्ट समझाएँ", drop: "अपनी रिपोर्ट यहाँ डालें", uploadHint: "लैब रिपोर्ट, पर्चा या डिस्चार्ज सारांश · JPG या PNG · अधिकतम 5 पृष्ठ", findings: "आपके परिणाम", meaning: "इसका क्या अर्थ है", questions: "डॉक्टर से पूछें", lifestyle: "सामान्य स्वास्थ्य सुझाव", copyQuestions: "प्रश्न कॉपी करें", savePdf: "PDF सहेजें", changeLanguage: "भाषा बदलें", newReport: "नई रिपोर्ट", recentReports: "हाल की रिपोर्टें", clearHistory: "इतिहास मिटाएँ", noReports: "अभी कोई रिपोर्ट सहेजी नहीं गई।", disclaimerTitle: "Lumen डॉक्टर नहीं है।", disclaimerBody: "यह स्वास्थ्यकर्मी से बेहतर बातचीत के लिए मेडिकल दस्तावेज़ समझाता है। यह निदान, उपचार या चिकित्सा सलाह का विकल्प नहीं है। हमेशा योग्य डॉक्टर से सलाह लें। चित्र विश्लेषण के लिए चुने गए AI प्रदाता को भेजे जाते हैं और हमारे सर्वर पर संग्रहीत नहीं होते।", reading: "रिपोर्ट पढ़ी जा रही है…", translating: "अनुवाद हो रहा है…", copied: "✓ कॉपी किया", invalidFiles: "कृपया JPG या PNG चित्र अपलोड करें।", uploadFirst: "पहले रिपोर्ट अपलोड करें।", tooManyPages: "आप अधिकतम 5 पृष्ठ अपलोड कर सकते हैं।", payloadTooLarge: "पृष्ठ बहुत बड़े हैं। एक पृष्ठ हटाएँ या छोटे, स्पष्ट चित्र इस्तेमाल करें।", remove: "हटाएँ", page: "पृष्ठ", reference: "संदर्भ", report: "रिपोर्ट", normal: "सामान्य", low: "कम", high: "अधिक", borderline: "सीमांत", critical: "गंभीर"
+  },
+  bn: {
+    eyebrow: "ব্যক্তিগত · সাইন-আপ নেই", heroTitle: "আপনার মেডিক্যাল রিপোর্ট,", heroEmphasis: "এবার সহজ ভাষায়।", heroBody: "ল্যাব রিপোর্ট বা প্রেসক্রিপশন আপলোড করুন। Lumen প্রতিটি মান বোঝায় এবং ডাক্তারকে জিজ্ঞাসার প্রশ্ন তৈরি করে।", neverStored: "কখনও সংরক্ষিত নয়", languages: "ভাষা", notDiagnosis: "রোগনির্ণয় নয় — সহজ ব্যাখ্যা", language: "ভাষা", explain: "আমার রিপোর্ট বুঝিয়ে দিন", drop: "রিপোর্ট এখানে দিন", uploadHint: "ল্যাব রিপোর্ট, প্রেসক্রিপশন বা ডিসচার্জ সারাংশ · JPG বা PNG · সর্বোচ্চ ৫ পৃষ্ঠা", findings: "আপনার ফলাফল", meaning: "এর অর্থ কী", questions: "ডাক্তারকে জিজ্ঞাসা করুন", lifestyle: "সাধারণ সুস্থতার পরামর্শ", copyQuestions: "প্রশ্ন কপি করুন", savePdf: "PDF সংরক্ষণ করুন", changeLanguage: "ভাষা বদলান", newReport: "নতুন রিপোর্ট", recentReports: "সাম্প্রতিক রিপোর্ট", clearHistory: "ইতিহাস মুছুন", noReports: "এখনও কোনো রিপোর্ট সংরক্ষিত নেই।", disclaimerTitle: "Lumen ডাক্তার নয়।", disclaimerBody: "এটি স্বাস্থ্যকর্মীর সঙ্গে ভালো আলোচনার জন্য মেডিক্যাল নথি বোঝায়। এটি রোগনির্ণয়, চিকিৎসা বা চিকিৎসা-পরামর্শের বিকল্প নয়। সব সময় যোগ্য চিকিৎসকের পরামর্শ নিন। ছবি বিশ্লেষণের জন্য নির্বাচিত AI প্রদানকারীর কাছে পাঠানো হয় এবং আমাদের সার্ভারে রাখা হয় না।", reading: "রিপোর্ট পড়া হচ্ছে…", translating: "অনুবাদ হচ্ছে…", copied: "✓ কপি হয়েছে", invalidFiles: "JPG বা PNG ছবি আপলোড করুন।", uploadFirst: "প্রথমে একটি রিপোর্ট আপলোড করুন।", tooManyPages: "সর্বোচ্চ ৫টি পৃষ্ঠা আপলোড করা যাবে।", payloadTooLarge: "পৃষ্ঠাগুলি খুব বড়। একটি পৃষ্ঠা সরান বা ছোট, পরিষ্কার ছবি ব্যবহার করুন।", remove: "সরান", page: "পৃষ্ঠা", reference: "রেফারেন্স", report: "রিপোর্ট", normal: "স্বাভাবিক", low: "কম", high: "বেশি", borderline: "সীমান্তবর্তী", critical: "গুরুতর"
+  },
+  as: {
+    eyebrow: "ব্যক্তিগত · ছাইন-আপ নাই", heroTitle: "আপোনাৰ চিকিৎসা প্ৰতিবেদন,", heroEmphasis: "এতিয়া সহজ ভাষাত।", heroBody: "লেব প্ৰতিবেদন বা প্ৰেছক্ৰিপচন আপলোড কৰক। Lumen-এ প্ৰতিটো মান বুজাই আৰু চিকিৎসকক সুধিবলগীয়া প্ৰশ্ন সাজি দিয়ে।", neverStored: "কেতিয়াও সংৰক্ষণ নহয়", languages: "ভাষা", notDiagnosis: "ৰোগ নিৰ্ণয় নহয় — সহজ ব্যাখ্যা", language: "ভাষা", explain: "মোৰ প্ৰতিবেদন বুজাওক", drop: "প্ৰতিবেদন ইয়াত দিয়ক", uploadHint: "লেব প্ৰতিবেদন, প্ৰেছক্ৰিপচন বা ডিছচাৰ্জ সাৰাংশ · JPG বা PNG · সৰ্বাধিক ৫ পৃষ্ঠা", findings: "আপোনাৰ ফলাফল", meaning: "ইয়াৰ অৰ্থ কি", questions: "চিকিৎসকক সোধক", lifestyle: "সাধাৰণ সুস্থতাৰ পৰামৰ্শ", copyQuestions: "প্ৰশ্ন কপি কৰক", savePdf: "PDF সংৰক্ষণ কৰক", changeLanguage: "ভাষা সলনি কৰক", newReport: "নতুন প্ৰতিবেদন", recentReports: "শেহতীয়া প্ৰতিবেদন", clearHistory: "ইতিহাস মচক", noReports: "এতিয়ালৈ কোনো প্ৰতিবেদন সংৰক্ষণ কৰা নাই।", disclaimerTitle: "Lumen চিকিৎসক নহয়।", disclaimerBody: "ই চিকিৎসাকৰ্মীৰ সৈতে ভাল আলোচনাৰ বাবে চিকিৎসা নথি বুজাই দিয়ে। ই ৰোগ নিৰ্ণয়, চিকিৎসা বা চিকিৎসা পৰামৰ্শৰ বিকল্প নহয়। সদায় যোগ্য চিকিৎসকৰ পৰামৰ্শ লওক। ছবি বিশ্লেষণৰ বাবে নিৰ্বাচিত AI প্ৰদানকাৰীলৈ পঠোৱা হয় আৰু আমাৰ ছাৰ্ভাৰত সংৰক্ষণ কৰা নহয়।", reading: "প্ৰতিবেদন পঢ়ি থকা হৈছে…", translating: "অনুবাদ হৈ আছে…", copied: "✓ কপি হ’ল", invalidFiles: "JPG বা PNG ছবি আপলোড কৰক।", uploadFirst: "প্ৰথমে প্ৰতিবেদন আপলোড কৰক।", tooManyPages: "সৰ্বাধিক ৫টা পৃষ্ঠা আপলোড কৰিব পাৰিব।", payloadTooLarge: "পৃষ্ঠা অতি ডাঙৰ। এটা পৃষ্ঠা আঁতৰাওক বা সৰু, স্পষ্ট ছবি ব্যৱহাৰ কৰক।", remove: "আঁতৰাওক", page: "পৃষ্ঠা", reference: "প্ৰসংগ", report: "প্ৰতিবেদন", normal: "স্বাভাৱিক", low: "কম", high: "বেছি", borderline: "সীমান্তৱৰ্তী", critical: "গুৰুতৰ"
+  },
+  ta: {
+    eyebrow: "தனிப்பட்டது · பதிவு தேவையில்லை", heroTitle: "உங்கள் மருத்துவ அறிக்கை,", heroEmphasis: "இப்போது எளிய சொற்களில்.", heroBody: "ஆய்வக அறிக்கை அல்லது மருந்துச் சீட்டை பதிவேற்றுங்கள். Lumen ஒவ்வொரு மதிப்பையும் விளக்கி மருத்துவரிடம் கேட்க வேண்டிய கேள்விகளைத் தயாரிக்கிறது.", neverStored: "ஒருபோதும் சேமிக்கப்படாது", languages: "மொழிகள்", notDiagnosis: "நோயறிதல் அல்ல — எளிய விளக்கம்", language: "மொழி", explain: "என் அறிக்கையை விளக்கவும்", drop: "அறிக்கையை இங்கே இடவும்", uploadHint: "ஆய்வக அறிக்கை, மருந்துச் சீட்டு அல்லது வெளியேற்றச் சுருக்கம் · JPG அல்லது PNG · 5 பக்கங்கள் வரை", findings: "உங்கள் முடிவுகள்", meaning: "இதன் பொருள்", questions: "மருத்துவரிடம் கேளுங்கள்", lifestyle: "பொதுவான நலக் குறிப்புகள்", copyQuestions: "கேள்விகளை நகலெடுக்கவும்", savePdf: "PDF ஆக சேமிக்கவும்", changeLanguage: "மொழியை மாற்றவும்", newReport: "புதிய அறிக்கை", recentReports: "சமீபத்திய அறிக்கைகள்", clearHistory: "வரலாற்றை அழிக்கவும்", noReports: "சேமித்த அறிக்கைகள் எதுவும் இல்லை.", disclaimerTitle: "Lumen ஒரு மருத்துவர் அல்ல.", disclaimerBody: "சுகாதார நிபுணர்களுடன் உரையாட உதவ மருத்துவ ஆவணங்களை இது விளக்குகிறது. இது நோயறிதல், சிகிச்சை அல்லது மருத்துவ ஆலோசனைக்கு மாற்றாகாது. தகுதியான மருத்துவரை எப்போதும் அணுகவும். படங்கள் தேர்ந்தெடுத்த AI வழங்குநருக்கு அனுப்பப்படுகின்றன; எங்கள் சேவையகங்களில் சேமிக்கப்படுவதில்லை.", reading: "அறிக்கை படிக்கப்படுகிறது…", translating: "மொழிபெயர்க்கப்படுகிறது…", copied: "✓ நகலெடுக்கப்பட்டது", invalidFiles: "JPG அல்லது PNG படங்களைப் பதிவேற்றவும்.", uploadFirst: "முதலில் அறிக்கையைப் பதிவேற்றவும்.", tooManyPages: "5 பக்கங்கள் வரை பதிவேற்றலாம்.", payloadTooLarge: "பக்கங்கள் மிகவும் பெரியவை. ஒரு பக்கத்தை நீக்கவும் அல்லது சிறிய தெளிவான படங்களைப் பயன்படுத்தவும்.", remove: "நீக்கு", page: "பக்கம்", reference: "குறிப்பு", report: "அறிக்கை", normal: "இயல்பு", low: "குறைவு", high: "அதிகம்", borderline: "எல்லைநிலை", critical: "மிகக் கடுமை"
+  },
+  te: {
+    eyebrow: "వ్యక్తిగతం · సైన్-అప్ అవసరం లేదు", heroTitle: "మీ వైద్య నివేదిక,", heroEmphasis: "ఇప్పుడు సులభమైన మాటల్లో.", heroBody: "ల్యాబ్ రిపోర్ట్ లేదా ప్రిస్క్రిప్షన్‌ను అప్‌లోడ్ చేయండి. Lumen ప్రతి విలువను వివరిస్తూ వైద్యుడిని అడగాల్సిన ప్రశ్నలను సిద్ధం చేస్తుంది.", neverStored: "ఎప్పుడూ నిల్వ చేయము", languages: "భాషలు", notDiagnosis: "రోగ నిర్ధారణ కాదు — సరళ వివరణ", language: "భాష", explain: "నా నివేదికను వివరించండి", drop: "నివేదికను ఇక్కడ ఉంచండి", uploadHint: "ల్యాబ్ రిపోర్ట్, ప్రిస్క్రిప్షన్ లేదా డిశ్చార్జ్ సారాంశం · JPG లేదా PNG · 5 పేజీల వరకు", findings: "మీ ఫలితాలు", meaning: "దీని అర్థం", questions: "వైద్యుడిని అడగండి", lifestyle: "సాధారణ ఆరోగ్య సూచనలు", copyQuestions: "ప్రశ్నలను కాపీ చేయండి", savePdf: "PDFగా సేవ్ చేయండి", changeLanguage: "భాష మార్చండి", newReport: "కొత్త నివేదిక", recentReports: "ఇటీవలి నివేదికలు", clearHistory: "చరిత్రను తొలగించండి", noReports: "ఇంకా నివేదికలు సేవ్ కాలేదు.", disclaimerTitle: "Lumen వైద్యుడు కాదు.", disclaimerBody: "ఆరోగ్య నిపుణులతో మాట్లాడేందుకు వైద్య పత్రాలను ఇది వివరిస్తుంది. ఇది రోగ నిర్ధారణ, చికిత్స లేదా వైద్య సలహాకు ప్రత్యామ్నాయం కాదు. ఎల్లప్పుడూ అర్హతగల వైద్యుడిని సంప్రదించండి. చిత్రాలు విశ్లేషణ కోసం ఎంచుకున్న AI సేవకు పంపబడతాయి; మా సర్వర్లలో నిల్వ చేయబడవు.", reading: "నివేదిక చదువుతోంది…", translating: "అనువదిస్తోంది…", copied: "✓ కాపీ అయింది", invalidFiles: "JPG లేదా PNG చిత్రాలను అప్‌లోడ్ చేయండి.", uploadFirst: "ముందుగా నివేదికను అప్‌లోడ్ చేయండి.", tooManyPages: "5 పేజీల వరకు అప్‌లోడ్ చేయవచ్చు.", payloadTooLarge: "పేజీలు చాలా పెద్దవి. ఒక పేజీని తొలగించండి లేదా చిన్న స్పష్టమైన చిత్రాలను ఉపయోగించండి.", remove: "తొలగించు", page: "పేజీ", reference: "సూచన", report: "నివేదిక", normal: "సాధారణం", low: "తక్కువ", high: "ఎక్కువ", borderline: "సరిహద్దు", critical: "తీవ్రమైన"
+  },
+  mr: {
+    eyebrow: "खासगी · साइन-अप नाही", heroTitle: "तुमचा वैद्यकीय अहवाल,", heroEmphasis: "आता सोप्या शब्दांत.", heroBody: "लॅब रिपोर्ट किंवा प्रिस्क्रिप्शन अपलोड करा. Lumen प्रत्येक मूल्य समजावते आणि डॉक्टरांना विचारायचे प्रश्न तयार करते.", neverStored: "कधीही साठवले जात नाही", languages: "भाषा", notDiagnosis: "निदान नाही — सोपे स्पष्टीकरण", language: "भाषा", explain: "माझा अहवाल समजावून सांगा", drop: "अहवाल येथे टाका", uploadHint: "लॅब रिपोर्ट, प्रिस्क्रिप्शन किंवा डिस्चार्ज सारांश · JPG किंवा PNG · जास्तीत जास्त ५ पाने", findings: "तुमचे निकाल", meaning: "याचा अर्थ", questions: "डॉक्टरांना विचारा", lifestyle: "सामान्य आरोग्य सूचना", copyQuestions: "प्रश्न कॉपी करा", savePdf: "PDF जतन करा", changeLanguage: "भाषा बदला", newReport: "नवीन अहवाल", recentReports: "अलीकडील अहवाल", clearHistory: "इतिहास मिटवा", noReports: "अजून कोणताही अहवाल जतन केलेला नाही.", disclaimerTitle: "Lumen डॉक्टर नाही.", disclaimerBody: "आरोग्य व्यावसायिकांशी संवाद साधण्यासाठी हे वैद्यकीय कागदपत्रे समजावते. हे निदान, उपचार किंवा वैद्यकीय सल्ल्याचा पर्याय नाही. नेहमी पात्र डॉक्टरांचा सल्ला घ्या. चित्रे विश्लेषणासाठी निवडलेल्या AI प्रदात्याकडे पाठवली जातात आणि आमच्या सर्व्हरवर साठवली जात नाहीत.", reading: "अहवाल वाचला जात आहे…", translating: "भाषांतर होत आहे…", copied: "✓ कॉपी झाले", invalidFiles: "JPG किंवा PNG चित्रे अपलोड करा.", uploadFirst: "प्रथम अहवाल अपलोड करा.", tooManyPages: "जास्तीत जास्त ५ पाने अपलोड करू शकता.", payloadTooLarge: "पाने खूप मोठी आहेत. एक पान काढा किंवा लहान, स्पष्ट चित्रे वापरा.", remove: "काढा", page: "पान", reference: "संदर्भ", report: "अहवाल", normal: "सामान्य", low: "कमी", high: "जास्त", borderline: "सीमारेषेवर", critical: "गंभीर"
+  },
+  kn: {
+    eyebrow: "ಖಾಸಗಿ · ಸೈನ್-ಅಪ್ ಬೇಡ", heroTitle: "ನಿಮ್ಮ ವೈದ್ಯಕೀಯ ವರದಿ,", heroEmphasis: "ಈಗ ಸರಳ ಪದಗಳಲ್ಲಿ.", heroBody: "ಲ್ಯಾಬ್ ವರದಿ ಅಥವಾ ಔಷಧ ಚೀಟಿಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ. Lumen ಪ್ರತಿಯೊಂದು ಮೌಲ್ಯವನ್ನು ವಿವರಿಸಿ ವೈದ್ಯರನ್ನು ಕೇಳಬೇಕಾದ ಪ್ರಶ್ನೆಗಳನ್ನು ಸಿದ್ಧಪಡಿಸುತ್ತದೆ.", neverStored: "ಎಂದಿಗೂ ಸಂಗ್ರಹಿಸುವುದಿಲ್ಲ", languages: "ಭಾಷೆಗಳು", notDiagnosis: "ರೋಗನಿರ್ಣಯವಲ್ಲ — ಸರಳ ವಿವರಣೆ", language: "ಭಾಷೆ", explain: "ನನ್ನ ವರದಿಯನ್ನು ವಿವರಿಸಿ", drop: "ವರದಿಯನ್ನು ಇಲ್ಲಿ ಹಾಕಿ", uploadHint: "ಲ್ಯಾಬ್ ವರದಿ, ಔಷಧ ಚೀಟಿ ಅಥವಾ ಡಿಸ್ಚಾರ್ಜ್ ಸಾರಾಂಶ · JPG ಅಥವಾ PNG · 5 ಪುಟಗಳವರೆಗೆ", findings: "ನಿಮ್ಮ ಫಲಿತಾಂಶಗಳು", meaning: "ಇದರ ಅರ್ಥ", questions: "ವೈದ್ಯರನ್ನು ಕೇಳಿ", lifestyle: "ಸಾಮಾನ್ಯ ಆರೋಗ್ಯ ಸೂಚನೆಗಳು", copyQuestions: "ಪ್ರಶ್ನೆಗಳನ್ನು ನಕಲಿಸಿ", savePdf: "PDF ಆಗಿ ಉಳಿಸಿ", changeLanguage: "ಭಾಷೆ ಬದಲಿಸಿ", newReport: "ಹೊಸ ವರದಿ", recentReports: "ಇತ್ತೀಚಿನ ವರದಿಗಳು", clearHistory: "ಇತಿಹಾಸ ಅಳಿಸಿ", noReports: "ಇನ್ನೂ ವರದಿಗಳು ಉಳಿಸಿಲ್ಲ.", disclaimerTitle: "Lumen ವೈದ್ಯರಲ್ಲ.", disclaimerBody: "ಆರೋಗ್ಯ ವೃತ್ತಿಪರರೊಂದಿಗೆ ಮಾತನಾಡಲು ವೈದ್ಯಕೀಯ ದಾಖಲೆಗಳನ್ನು ಇದು ವಿವರಿಸುತ್ತದೆ. ಇದು ರೋಗನಿರ್ಣಯ, ಚಿಕಿತ್ಸೆ ಅಥವಾ ವೈದ್ಯಕೀಯ ಸಲಹೆಗೆ ಪರ್ಯಾಯವಲ್ಲ. ಯಾವಾಗಲೂ ಅರ್ಹ ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ. ಚಿತ್ರಗಳನ್ನು ವಿಶ್ಲೇಷಣೆಗೆ ಆಯ್ದ AI ಪೂರೈಕೆದಾರರಿಗೆ ಕಳುಹಿಸಲಾಗುತ್ತದೆ; ನಮ್ಮ ಸರ್ವರ್‌ಗಳಲ್ಲಿ ಸಂಗ್ರಹಿಸಲಾಗುವುದಿಲ್ಲ.", reading: "ವರದಿ ಓದಲಾಗುತ್ತಿದೆ…", translating: "ಅನುವಾದಿಸಲಾಗುತ್ತಿದೆ…", copied: "✓ ನಕಲಿಸಲಾಗಿದೆ", invalidFiles: "JPG ಅಥವಾ PNG ಚಿತ್ರಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.", uploadFirst: "ಮೊದಲು ವರದಿಯನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.", tooManyPages: "5 ಪುಟಗಳವರೆಗೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಬಹುದು.", payloadTooLarge: "ಪುಟಗಳು ತುಂಬಾ ದೊಡ್ಡದಾಗಿವೆ. ಒಂದು ಪುಟ ತೆಗೆದುಹಾಕಿ ಅಥವಾ ಸಣ್ಣ ಸ್ಪಷ್ಟ ಚಿತ್ರಗಳನ್ನು ಬಳಸಿ.", remove: "ತೆಗೆದುಹಾಕಿ", page: "ಪುಟ", reference: "ಉಲ್ಲೇಖ", report: "ವರದಿ", normal: "ಸಾಮಾನ್ಯ", low: "ಕಡಿಮೆ", high: "ಹೆಚ್ಚು", borderline: "ಗಡಿಭಾಗ", critical: "ಗಂಭೀರ"
+  },
+  gu: {
+    eyebrow: "ખાનગી · સાઇન-અપ નહીં", heroTitle: "તમારો તબીબી અહેવાલ,", heroEmphasis: "હવે સરળ શબ્દોમાં.", heroBody: "લેબ રિપોર્ટ અથવા પ્રિસ્ક્રિપ્શન અપલોડ કરો. Lumen દરેક મૂલ્ય સમજાવે છે અને ડૉક્ટરને પૂછવાના પ્રશ્નો તૈયાર કરે છે.", neverStored: "ક્યારેય સંગ્રહિત નહીં", languages: "ભાષાઓ", notDiagnosis: "નિદાન નહીં — સરળ સમજ", language: "ભાષા", explain: "મારો અહેવાલ સમજાવો", drop: "અહેવાલ અહીં મૂકો", uploadHint: "લેબ રિપોર્ટ, પ્રિસ્ક્રિપ્શન અથવા ડિસ્ચાર્જ સારાંશ · JPG અથવા PNG · વધુમાં વધુ ૫ પાનાં", findings: "તમારા પરિણામો", meaning: "આનો અર્થ", questions: "ડૉક્ટરને પૂછો", lifestyle: "સામાન્ય સુખાકારી સૂચનો", copyQuestions: "પ્રશ્નો કૉપિ કરો", savePdf: "PDF સાચવો", changeLanguage: "ભાષા બદલો", newReport: "નવો અહેવાલ", recentReports: "તાજેતરના અહેવાલો", clearHistory: "ઇતિહાસ સાફ કરો", noReports: "હજુ કોઈ અહેવાલ સાચવ્યો નથી.", disclaimerTitle: "Lumen ડૉક્ટર નથી.", disclaimerBody: "આરોગ્ય નિષ્ણાતો સાથે વાત કરવામાં મદદ માટે તે તબીબી દસ્તાવેજો સમજાવે છે. તે નિદાન, સારવાર અથવા તબીબી સલાહનો વિકલ્પ નથી. હંમેશાં લાયક ડૉક્ટરની સલાહ લો. ચિત્રો વિશ્લેષણ માટે પસંદ કરેલા AI પ્રદાતાને મોકલાય છે અને અમારા સર્વર પર સંગ્રહિત થતા નથી.", reading: "અહેવાલ વાંચી રહ્યા છીએ…", translating: "અનુવાદ થઈ રહ્યો છે…", copied: "✓ કૉપિ થયું", invalidFiles: "JPG અથવા PNG ચિત્રો અપલોડ કરો.", uploadFirst: "પહેલા અહેવાલ અપલોડ કરો.", tooManyPages: "વધુમાં વધુ ૫ પાનાં અપલોડ કરી શકો છો.", payloadTooLarge: "પાનાં બહુ મોટાં છે. એક પાનું દૂર કરો અથવા નાનાં સ્પષ્ટ ચિત્રો વાપરો.", remove: "દૂર કરો", page: "પાનું", reference: "સંદર્ભ", report: "અહેવાલ", normal: "સામાન્ય", low: "ઓછું", high: "વધુ", borderline: "સીમાવર્તી", critical: "ગંભીર"
+  },
+  ml: {
+    eyebrow: "സ്വകാര്യം · സൈൻ-അപ്പ് വേണ്ട", heroTitle: "നിങ്ങളുടെ മെഡിക്കൽ റിപ്പോർട്ട്,", heroEmphasis: "ഇപ്പോൾ ലളിതമായ വാക്കുകളിൽ.", heroBody: "ലാബ് റിപ്പോർട്ടോ മരുന്നുകുറിപ്പോ അപ്‌ലോഡ് ചെയ്യുക. Lumen ഓരോ മൂല്യവും വിശദീകരിച്ച് ഡോക്ടറോട് ചോദിക്കാനുള്ള ചോദ്യങ്ങൾ തയ്യാറാക്കുന്നു.", neverStored: "ഒരിക്കലും സംഭരിക്കില്ല", languages: "ഭാഷകൾ", notDiagnosis: "രോഗനിർണയം അല്ല — ലളിതമായ വിശദീകരണം", language: "ഭാഷ", explain: "എന്റെ റിപ്പോർട്ട് വിശദീകരിക്കുക", drop: "റിപ്പോർട്ട് ഇവിടെ ഇടുക", uploadHint: "ലാബ് റിപ്പോർട്ട്, മരുന്നുകുറിപ്പ് അല്ലെങ്കിൽ ഡിസ്ചാർജ് സംഗ്രഹം · JPG അല്ലെങ്കിൽ PNG · 5 പേജ് വരെ", findings: "നിങ്ങളുടെ ഫലങ്ങൾ", meaning: "ഇതിന്റെ അർത്ഥം", questions: "ഡോക്ടറോട് ചോദിക്കുക", lifestyle: "പൊതുവായ ആരോഗ്യ നിർദേശങ്ങൾ", copyQuestions: "ചോദ്യങ്ങൾ പകർത്തുക", savePdf: "PDF ആയി സൂക്ഷിക്കുക", changeLanguage: "ഭാഷ മാറ്റുക", newReport: "പുതിയ റിപ്പോർട്ട്", recentReports: "സമീപകാല റിപ്പോർട്ടുകൾ", clearHistory: "ചരിത്രം മായ്ക്കുക", noReports: "ഇതുവരെ റിപ്പോർട്ടുകളൊന്നും സൂക്ഷിച്ചിട്ടില്ല.", disclaimerTitle: "Lumen ഒരു ഡോക്ടറല്ല.", disclaimerBody: "ആരോഗ്യ വിദഗ്ധരുമായി സംസാരിക്കാൻ സഹായിക്കുന്നതിനായി ഇത് മെഡിക്കൽ രേഖകൾ വിശദീകരിക്കുന്നു. ഇത് രോഗനിർണയം, ചികിത്സ, അല്ലെങ്കിൽ മെഡിക്കൽ ഉപദേശം എന്നിവയ്ക്ക് പകരമല്ല. യോഗ്യനായ ഡോക്ടറെ എപ്പോഴും സമീപിക്കുക. ചിത്രങ്ങൾ വിശകലനത്തിനായി തിരഞ്ഞെടുത്ത AI ദാതാവിന് അയയ്ക്കുന്നു; ഞങ്ങളുടെ സെർവറുകളിൽ സംഭരിക്കുന്നില്ല.", reading: "റിപ്പോർട്ട് വായിക്കുന്നു…", translating: "വിവർത്തനം ചെയ്യുന്നു…", copied: "✓ പകർത്തി", invalidFiles: "JPG അല്ലെങ്കിൽ PNG ചിത്രങ്ങൾ അപ്‌ലോഡ് ചെയ്യുക.", uploadFirst: "ആദ്യം റിപ്പോർട്ട് അപ്‌ലോഡ് ചെയ്യുക.", tooManyPages: "5 പേജ് വരെ അപ്‌ലോഡ് ചെയ്യാം.", payloadTooLarge: "പേജുകൾ വളരെ വലുതാണ്. ഒരു പേജ് നീക്കുക അല്ലെങ്കിൽ ചെറിയ വ്യക്തമായ ചിത്രങ്ങൾ ഉപയോഗിക്കുക.", remove: "നീക്കുക", page: "പേജ്", reference: "സൂചന", report: "റിപ്പോർട്ട്", normal: "സാധാരണം", low: "കുറവ്", high: "കൂടുതൽ", borderline: "അതിർത്തി", critical: "ഗുരുതരം"
+  },
+  pa: {
+    eyebrow: "ਨਿੱਜੀ · ਸਾਈਨ-ਅੱਪ ਨਹੀਂ", heroTitle: "ਤੁਹਾਡੀ ਮੈਡੀਕਲ ਰਿਪੋਰਟ,", heroEmphasis: "ਹੁਣ ਸੌਖੇ ਸ਼ਬਦਾਂ ਵਿੱਚ।", heroBody: "ਲੈਬ ਰਿਪੋਰਟ ਜਾਂ ਨੁਸਖ਼ਾ ਅੱਪਲੋਡ ਕਰੋ। Lumen ਹਰ ਮੁੱਲ ਸਮਝਾਉਂਦਾ ਹੈ ਅਤੇ ਡਾਕਟਰ ਨੂੰ ਪੁੱਛਣ ਲਈ ਸਵਾਲ ਤਿਆਰ ਕਰਦਾ ਹੈ।", neverStored: "ਕਦੇ ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾਂਦਾ", languages: "ਭਾਸ਼ਾਵਾਂ", notDiagnosis: "ਤਸ਼ਖ਼ੀਸ ਨਹੀਂ — ਸੌਖੀ ਵਿਆਖਿਆ", language: "ਭਾਸ਼ਾ", explain: "ਮੇਰੀ ਰਿਪੋਰਟ ਸਮਝਾਓ", drop: "ਰਿਪੋਰਟ ਇੱਥੇ ਪਾਓ", uploadHint: "ਲੈਬ ਰਿਪੋਰਟ, ਨੁਸਖ਼ਾ ਜਾਂ ਡਿਸਚਾਰਜ ਸਾਰ · JPG ਜਾਂ PNG · ਵੱਧ ਤੋਂ ਵੱਧ ੫ ਸਫ਼ੇ", findings: "ਤੁਹਾਡੇ ਨਤੀਜੇ", meaning: "ਇਸਦਾ ਅਰਥ", questions: "ਡਾਕਟਰ ਨੂੰ ਪੁੱਛੋ", lifestyle: "ਆਮ ਤੰਦਰੁਸਤੀ ਸੁਝਾਅ", copyQuestions: "ਸਵਾਲ ਕਾਪੀ ਕਰੋ", savePdf: "PDF ਸੰਭਾਲੋ", changeLanguage: "ਭਾਸ਼ਾ ਬਦਲੋ", newReport: "ਨਵੀਂ ਰਿਪੋਰਟ", recentReports: "ਹਾਲੀਆ ਰਿਪੋਰਟਾਂ", clearHistory: "ਇਤਿਹਾਸ ਮਿਟਾਓ", noReports: "ਹਾਲੇ ਕੋਈ ਰਿਪੋਰਟ ਸੰਭਾਲੀ ਨਹੀਂ।", disclaimerTitle: "Lumen ਡਾਕਟਰ ਨਹੀਂ ਹੈ।", disclaimerBody: "ਇਹ ਸਿਹਤ ਮਾਹਿਰਾਂ ਨਾਲ ਗੱਲ ਕਰਨ ਲਈ ਮੈਡੀਕਲ ਦਸਤਾਵੇਜ਼ ਸਮਝਾਉਂਦਾ ਹੈ। ਇਹ ਤਸ਼ਖ਼ੀਸ, ਇਲਾਜ ਜਾਂ ਮੈਡੀਕਲ ਸਲਾਹ ਦਾ ਬਦਲ ਨਹੀਂ ਹੈ। ਹਮੇਸ਼ਾਂ ਯੋਗ ਡਾਕਟਰ ਨਾਲ ਸਲਾਹ ਕਰੋ। ਤਸਵੀਰਾਂ ਵਿਸ਼ਲੇਸ਼ਣ ਲਈ ਚੁਣੇ AI ਪ੍ਰਦਾਤਾ ਨੂੰ ਭੇਜੀਆਂ ਜਾਂਦੀਆਂ ਹਨ ਅਤੇ ਸਾਡੇ ਸਰਵਰਾਂ ਉੱਤੇ ਸੰਭਾਲੀਆਂ ਨਹੀਂ ਜਾਂਦੀਆਂ।", reading: "ਰਿਪੋਰਟ ਪੜ੍ਹੀ ਜਾ ਰਹੀ ਹੈ…", translating: "ਅਨੁਵਾਦ ਹੋ ਰਿਹਾ ਹੈ…", copied: "✓ ਕਾਪੀ ਹੋਇਆ", invalidFiles: "JPG ਜਾਂ PNG ਤਸਵੀਰਾਂ ਅੱਪਲੋਡ ਕਰੋ।", uploadFirst: "ਪਹਿਲਾਂ ਰਿਪੋਰਟ ਅੱਪਲੋਡ ਕਰੋ।", tooManyPages: "ਵੱਧ ਤੋਂ ਵੱਧ ੫ ਸਫ਼ੇ ਅੱਪਲੋਡ ਕਰ ਸਕਦੇ ਹੋ।", payloadTooLarge: "ਸਫ਼ੇ ਬਹੁਤ ਵੱਡੇ ਹਨ। ਇੱਕ ਸਫ਼ਾ ਹਟਾਓ ਜਾਂ ਛੋਟੀਆਂ ਸਾਫ਼ ਤਸਵੀਰਾਂ ਵਰਤੋ।", remove: "ਹਟਾਓ", page: "ਸਫ਼ਾ", reference: "ਹਵਾਲਾ", report: "ਰਿਪੋਰਟ", normal: "ਸਧਾਰਨ", low: "ਘੱਟ", high: "ਵੱਧ", borderline: "ਸੀਮਾਵਰਤੀ", critical: "ਗੰਭੀਰ"
+  },
+  or: {
+    eyebrow: "ବ୍ୟକ୍ତିଗତ · ସାଇନ୍-ଅପ୍ ନାହିଁ", heroTitle: "ଆପଣଙ୍କ ଚିକିତ୍ସା ରିପୋର୍ଟ,", heroEmphasis: "ଏବେ ସରଳ ଶବ୍ଦରେ।", heroBody: "ଲ୍ୟାବ୍ ରିପୋର୍ଟ କିମ୍ବା ପ୍ରେସକ୍ରିପସନ୍ ଅପଲୋଡ୍ କରନ୍ତୁ। Lumen ପ୍ରତ୍ୟେକ ମୂଲ୍ୟ ବୁଝାଏ ଏବଂ ଡାକ୍ତରଙ୍କୁ ପଚାରିବା ପ୍ରଶ୍ନ ପ୍ରସ୍ତୁତ କରେ।", neverStored: "କେବେ ସଞ୍ଚିତ ହୁଏ ନାହିଁ", languages: "ଭାଷା", notDiagnosis: "ରୋଗ ନିର୍ଣ୍ଣୟ ନୁହେଁ — ସରଳ ବ୍ୟାଖ୍ୟା", language: "ଭାଷା", explain: "ମୋ ରିପୋର୍ଟ ବୁଝାନ୍ତୁ", drop: "ରିପୋର୍ଟ ଏଠାରେ ଦିଅନ୍ତୁ", uploadHint: "ଲ୍ୟାବ୍ ରିପୋର୍ଟ, ପ୍ରେସକ୍ରିପସନ୍ କିମ୍ବା ଡିସଚାର୍ଜ ସାରାଂଶ · JPG କିମ୍ବା PNG · ସର୍ବାଧିକ ୫ ପୃଷ୍ଠା", findings: "ଆପଣଙ୍କ ଫଳାଫଳ", meaning: "ଏହାର ଅର୍ଥ", questions: "ଡାକ୍ତରଙ୍କୁ ପଚାରନ୍ତୁ", lifestyle: "ସାଧାରଣ ସୁସ୍ଥତା ପରାମର୍ଶ", copyQuestions: "ପ୍ରଶ୍ନ କପି କରନ୍ତୁ", savePdf: "PDF ସଞ୍ଚୟ କରନ୍ତୁ", changeLanguage: "ଭାଷା ବଦଳାନ୍ତୁ", newReport: "ନୂଆ ରିପୋର୍ଟ", recentReports: "ସାମ୍ପ୍ରତିକ ରିପୋର୍ଟ", clearHistory: "ଇତିହାସ ସଫା କରନ୍ତୁ", noReports: "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ରିପୋର୍ଟ ସଞ୍ଚିତ ନାହିଁ।", disclaimerTitle: "Lumen ଡାକ୍ତର ନୁହେଁ।", disclaimerBody: "ସ୍ୱାସ୍ଥ୍ୟ ବିଶେଷଜ୍ଞଙ୍କ ସହ କଥା ହେବାରେ ସାହାଯ୍ୟ ପାଇଁ ଏହା ଚିକିତ୍ସା ଦଲିଲ ବୁଝାଏ। ଏହା ରୋଗ ନିର୍ଣ୍ଣୟ, ଚିକିତ୍ସା କିମ୍ବା ଚିକିତ୍ସା ପରାମର୍ଶର ବିକଳ୍ପ ନୁହେଁ। ସବୁବେଳେ ଯୋଗ୍ୟ ଡାକ୍ତରଙ୍କ ପରାମର୍ଶ ନିଅନ୍ତୁ। ଛବି ବିଶ୍ଳେଷଣ ପାଇଁ ଚୟନିତ AI ପ୍ରଦାନକାରୀଙ୍କୁ ପଠାଯାଏ ଏବଂ ଆମ ସର୍ଭରରେ ସଞ୍ଚିତ ହୁଏ ନାହିଁ।", reading: "ରିପୋର୍ଟ ପଢ଼ାଯାଉଛି…", translating: "ଅନୁବାଦ ହେଉଛି…", copied: "✓ କପି ହେଲା", invalidFiles: "JPG କିମ୍ବା PNG ଛବି ଅପଲୋଡ୍ କରନ୍ତୁ।", uploadFirst: "ପ୍ରଥମେ ରିପୋର୍ଟ ଅପଲୋଡ୍ କରନ୍ତୁ।", tooManyPages: "ସର୍ବାଧିକ ୫ ପୃଷ୍ଠା ଅପଲୋଡ୍ କରିପାରିବେ।", payloadTooLarge: "ପୃଷ୍ଠାଗୁଡ଼ିକ ବହୁତ ବଡ଼। ଗୋଟିଏ ପୃଷ୍ଠା କାଢ଼ନ୍ତୁ କିମ୍ବା ଛୋଟ ସ୍ପଷ୍ଟ ଛବି ବ୍ୟବହାର କରନ୍ତୁ।", remove: "କାଢ଼ନ୍ତୁ", page: "ପୃଷ୍ଠା", reference: "ସନ୍ଦର୍ଭ", report: "ରିପୋର୍ଟ", normal: "ସାଧାରଣ", low: "କମ୍", high: "ଅଧିକ", borderline: "ସୀମାନ୍ତ", critical: "ଗୁରୁତର"
+  },
+  ur: {
+    eyebrow: "نجی · سائن اپ نہیں", heroTitle: "آپ کی طبی رپورٹ،", heroEmphasis: "اب آسان الفاظ میں۔", heroBody: "لیب رپورٹ یا نسخہ اپ لوڈ کریں۔ Lumen ہر قدر سمجھاتا ہے اور ڈاکٹر سے پوچھنے کے سوالات تیار کرتا ہے۔", neverStored: "کبھی محفوظ نہیں کیا جاتا", languages: "زبانیں", notDiagnosis: "تشخیص نہیں — آسان وضاحت", language: "زبان", explain: "میری رپورٹ سمجھائیں", drop: "رپورٹ یہاں ڈالیں", uploadHint: "لیب رپورٹ، نسخہ یا ڈسچارج خلاصہ · JPG یا PNG · زیادہ سے زیادہ ۵ صفحات", findings: "آپ کے نتائج", meaning: "اس کا مطلب", questions: "ڈاکٹر سے پوچھیں", lifestyle: "عمومی صحت کی تجاویز", copyQuestions: "سوالات کاپی کریں", savePdf: "PDF محفوظ کریں", changeLanguage: "زبان بدلیں", newReport: "نئی رپورٹ", recentReports: "حالیہ رپورٹس", clearHistory: "تاریخ صاف کریں", noReports: "ابھی کوئی رپورٹ محفوظ نہیں۔", disclaimerTitle: "Lumen ڈاکٹر نہیں ہے۔", disclaimerBody: "یہ صحت کے ماہرین سے بہتر گفتگو کے لیے طبی دستاویزات سمجھاتا ہے۔ یہ تشخیص، علاج یا طبی مشورے کا متبادل نہیں۔ ہمیشہ مستند ڈاکٹر سے مشورہ کریں۔ تصاویر تجزیے کے لیے منتخب AI فراہم کنندہ کو بھیجی جاتی ہیں اور ہمارے سرور پر محفوظ نہیں ہوتیں۔", reading: "رپورٹ پڑھی جا رہی ہے…", translating: "ترجمہ ہو رہا ہے…", copied: "✓ کاپی ہوگیا", invalidFiles: "براہ کرم JPG یا PNG تصاویر اپ لوڈ کریں۔", uploadFirst: "پہلے رپورٹ اپ لوڈ کریں۔", tooManyPages: "زیادہ سے زیادہ ۵ صفحات اپ لوڈ کیے جا سکتے ہیں۔", payloadTooLarge: "صفحات بہت بڑے ہیں۔ ایک صفحہ ہٹائیں یا چھوٹی، واضح تصاویر استعمال کریں۔", remove: "ہٹائیں", page: "صفحہ", reference: "حوالہ", report: "رپورٹ", normal: "معمول", low: "کم", high: "زیادہ", borderline: "حد کے قریب", critical: "انتہائی سنگین"
+  }
+};
+
+const metadata = [
+  ["en", "English", "simple English", "ltr", "Latin", true],
+  ["hi", "हिन्दी", "Hindi in Devanagari script", "ltr", "Devanagari", false],
+  ["bn", "বাংলা", "Bengali in Bengali script", "ltr", "Bengali", false],
+  ["as", "অসমীয়া", "Assamese in Bengali-Assamese script", "ltr", "Bengali", false],
+  ["ta", "தமிழ்", "Tamil in Tamil script", "ltr", "Tamil", false],
+  ["te", "తెలుగు", "Telugu in Telugu script", "ltr", "Telugu", false],
+  ["mr", "मराठी", "Marathi in Devanagari script", "ltr", "Devanagari", false],
+  ["kn", "ಕನ್ನಡ", "Kannada in Kannada script", "ltr", "Kannada", false],
+  ["gu", "ગુજરાતી", "Gujarati in Gujarati script", "ltr", "Gujarati", false],
+  ["ml", "മലയാളം", "Malayalam in Malayalam script", "ltr", "Malayalam", false],
+  ["pa", "ਪੰਜਾਬੀ", "Punjabi in Gurmukhi script", "ltr", "Gurmukhi", false],
+  ["or", "ଓଡ଼ିଆ", "Odia in Odia script", "ltr", "Odia", false],
+  ["ur", "اردو", "Urdu in Arabic script", "rtl", "Arabic", false]
+];
+
+export const LOCALES = metadata.map(([code, label, prompt, dir, script, reviewed]) => ({
+  code, label, prompt, dir, script, reviewed, enabled: true,
+  ui: code === "en" ? en : translations[code]
+}));
+
+export const DEFAULT_LOCALE = "en";
+
+export function getLocale(code) {
+  return LOCALES.find(locale => locale.code === code) || LOCALES[0];
+}
+
+export function getEnabledLocales({ reviewedOnly = false } = {}) {
+  return LOCALES.filter(locale => locale.enabled && (!reviewedOnly || locale.reviewed));
+}
+
+export function translate(code, key) {
+  const locale = getLocale(code);
+  return locale.ui[key] || en[key] || key;
+}
+
+export function localeFromLegacyPrompt(prompt) {
+  if (typeof prompt !== "string") return null;
+  const legacyPrompts = {
+    "simple English": "en",
+    "Hindi (Devanagari script)": "hi",
+    Bengali: "bn", Assamese: "as", Tamil: "ta", Telugu: "te", Marathi: "mr",
+    Kannada: "kn", Gujarati: "gu", Malayalam: "ml",
+    "Punjabi (Gurmukhi script)": "pa", Odia: "or", Urdu: "ur"
+  };
+  return LOCALES.find(locale => locale.prompt === prompt)?.code || legacyPrompts[prompt] || null;
+}
+
+const SCRIPT_PATTERNS = {
+  Latin: /[A-Za-z]/gu,
+  Devanagari: /[\u0900-\u097F]/gu,
+  Bengali: /[\u0980-\u09FF]/gu,
+  Gurmukhi: /[\u0A00-\u0A7F]/gu,
+  Gujarati: /[\u0A80-\u0AFF]/gu,
+  Odia: /[\u0B00-\u0B7F]/gu,
+  Tamil: /[\u0B80-\u0BFF]/gu,
+  Telugu: /[\u0C00-\u0C7F]/gu,
+  Kannada: /[\u0C80-\u0CFF]/gu,
+  Malayalam: /[\u0D00-\u0D7F]/gu,
+  Arabic: /[\u0600-\u06FF\u0750-\u077F]/gu
+};
+
+export function hasExpectedScript(text, code) {
+  const locale = getLocale(code);
+  if (locale.code === "en") return true;
+  const value = String(text || "");
+  const letters = value.match(/\p{L}/gu) || [];
+  const expected = value.match(SCRIPT_PATTERNS[locale.script]) || [];
+  return expected.length >= 12 && expected.length / Math.max(letters.length, 1) >= 0.15;
+}

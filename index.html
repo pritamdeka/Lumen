@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#0E7C66">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Gujarati:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Gurmukhi:wght@400;500;600&family=Noto+Sans+Oriya:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Gujarati:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Gurmukhi:wght@400;500;600&family=Noto+Sans+Oriya:wght@400;500;600&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#FAF8F3; --surface:#FFFFFF; --surface-2:#F6F3EC;
@@ -40,6 +40,8 @@
   html{scroll-behavior:smooth}
   body{background:var(--bg);color:var(--ink);font-family:var(--font-b),var(--font-i);line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
   body.lang-indic{font-family:var(--font-i),var(--font-b)}
+  body.lang-ur{font-family:'Noto Nastaliq Urdu',var(--font-i);line-height:1.9}
+  .val,.tag{direction:ltr;unicode-bidi:isolate}
   .container{max-width:780px;margin:0 auto;padding:0 20px}
 
   /* nav */
@@ -81,6 +83,7 @@
   .thumb img{width:100%;height:100%;object-fit:cover}
   .thumb button{position:absolute;top:3px;right:3px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:.7rem;cursor:pointer;line-height:1}
   .controls{display:flex;gap:12px;margin-top:14px;padding:0 8px 8px;flex-wrap:wrap;align-items:center}
+  #uploadMeta{padding:0 12px 8px;text-align:center;color:var(--ink-soft);font-size:.78rem;min-height:1.2em}
   .btn-primary{flex:1;min-width:220px;padding:15px 24px;border:none;border-radius:14px;background:linear-gradient(135deg,var(--teal),var(--teal-deep));color:#fff;font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;transition:.2s;box-shadow:0 4px 14px rgba(14,124,102,.28)}
   [data-theme="dark"] .btn-primary{color:#08211B}
   .btn-primary:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(14,124,102,.35)}
@@ -174,11 +177,11 @@
 
   <section class="hero">
     <span class="eyebrow" id="eyebrow">Private &middot; Free &middot; No sign-up</span>
-    <h1 id="heroH1">Your medical report,<br><em>finally in plain words.</em></h1>
+    <h1 id="heroH1"><span id="heroTitle">Your medical report,</span><br><em id="heroEmphasis">finally in plain words.</em></h1>
     <p id="heroP">Upload a lab report or prescription. Lumen explains every value, flags what needs attention, and prepares the questions for your next doctor visit.</p>
     <div class="trust">
       <span>&#128274; <span id="t1">Never stored</span></span>
-      <span>&#127760; <span id="t2">11 languages</span></span>
+      <span>&#127760; <span id="t2">13 languages</span></span>
       <span>&#129658; <span id="t3">Not a diagnosis &mdash; a translation</span></span>
     </div>
   </section>
@@ -199,6 +202,7 @@
     <div class="controls">
       <button class="btn-primary" id="go" disabled>Explain my report</button>
     </div>
+    <div id="uploadMeta" aria-live="polite"></div>
   </div>
 
   <div id="status" role="status" aria-live="polite"></div>
@@ -247,7 +251,7 @@
   </div>
 
   <div class="card" id="history">
-    <div style="padding:16px 16px 8px;font-family:var(--font-d);font-weight:600;font-size:1.05rem">Recent reports</div>
+    <div id="historyTitle" style="padding:16px 16px 8px;font-family:var(--font-d);font-weight:600;font-size:1.05rem">Recent reports</div>
     <div id="histList"></div>
     <div style="padding:10px 16px 16px">
       <button class="copybtn" id="clearHist">Clear history</button>
@@ -255,52 +259,21 @@
   </div>
 
   <p class="disclaimer">
-    <b>Lumen is not a doctor.</b> It translates medical documents into plain language to help you have better conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician about your results. Your images are sent to the AI provider for analysis and are never stored on our servers.
+    <b id="disclaimerTitle">Lumen is not a doctor.</b> <span id="disclaimerBody">It explains medical documents to support conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician. Images are sent to the selected AI provider for analysis and are not stored on our servers.</span>
   </p>
 </div>
 
-<script>
+<script type="module">
 "use strict";
+import { DEFAULT_LOCALE, getEnabledLocales, getLocale, translate } from "./src/locales.js";
 const $=id=>document.getElementById(id);
 
 /* ---------------- languages ---------------- */
-const LANGS=[
-  {code:"en",  label:"English",   prompt:"simple English",              indic:false},
-  {code:"hi",  label:"हिन्दी",           prompt:"Hindi (Devanagari script)", indic:true},
-  {code:"bn",  label:"বাংলা",                 prompt:"Bengali",                   indic:true},
-  {code:"as",  label:"অসমীয়া",     prompt:"Assamese",                  indic:true},
-  {code:"ta",  label:"தமிழ்",                 prompt:"Tamil",                     indic:true},
-  {code:"te",  label:"తెలుగు",           prompt:"Telugu",                    indic:true},
-  {code:"mr",  label:"मराठी",                 prompt:"Marathi",                   indic:true},
-  {code:"kn",  label:"ಕನ್ನಡ",                 prompt:"Kannada",                   indic:true},
-  {code:"gu",  label:"ગુજરાતી",     prompt:"Gujarati",                  indic:true},
-  {code:"ml",  label:"മലയാളം",           prompt:"Malayalam",                 indic:true},
-  {code:"pa",  label:"ਪੰਜਾਬੀ",           prompt:"Punjabi (Gurmukhi script)", indic:true},
-  {code:"or",  label:"ଓଡିଆ",                       prompt:"Odia",                      indic:true},
-  {code:"ur",  label:"اردو",                        prompt:"Urdu",                      indic:true}
-];
-let currentLang=localStorage.getItem("lumen_lang")||"en";
-
-/* UI strings per language (interface chrome only; report content comes from the model) */
-const UI={
-  en:{explain:"Explain my report",drop:"Drop your report here",sub:"Photos or screenshots of a lab report, prescription or discharge summary",
-      findings:"Your numbers",meaning:"What this means",questions:"Ask your doctor",lifestyle:"General wellbeing notes",
-      copyQ:"Copy questions",print:"Save as PDF",retrans:"Change language",neu:"New report",lang:"Language",
-      reading:"Reading your report…",translating:"Translating…",copied:"✓ Copied"},
-  hi:{explain:"मेरी रिपोर्ट समझाएं",drop:"अपनी रिपोर्ट यहाँ डालें",sub:"लैब रिपोर्ट या पर्चे की फोटो",
-      findings:"आपके नंबर",meaning:"इसका मतलब",questions:"डॉक्टर से पूछें",lifestyle:"स्वास्थ्य सुझाव",
-      copyQ:"प्रश्न कॉपी करें",print:"PDF सहेजें",retrans:"भाषा बदलें",neu:"नई रिपोर्ट",lang:"भाषा",
-      reading:"रिपोर्ट पढ़ रहे हैं…",translating:"अनुवाद हो रहा है…",copied:"✓ कॉपी हुआ"},
-  bn:{explain:"আমার রিপোর্ট বোঝান",drop:"এখানে রিপোর্ট দিন",sub:"ল্যাব রিপোর্টের ছবি",
-      findings:"আপনার সংখ্যা",meaning:"এর মানে",questions:"ডাক্তারকে জিজ্ঞাসা করুন",lifestyle:"সুস্থতার পরামর্শ",
-      copyQ:"প্রশ্ন কপি করুন",print:"PDF সংরক্ষণ",retrans:"ভাষা পরিবর্তন",neu:"নতুন রিপোর্ট",lang:"ভাষা",
-      reading:"রিপোর্ট পড়া হচ্ছে…",translating:"অনুবাদ হচ্ছে…",copied:"✓ কপি হয়েছে"},
-  as:{explain:"মোর রিপোর্ট বুঝাওক",drop:"ইয়াত রিপোর্ট দিয়ক",sub:"লেব রিপোর্টর ছবি",
-      findings:"আপুনার সংখ্যা",meaning:"ইয়ার অর্থ",questions:"ডাক্তরক সোধক",lifestyle:"সুস্থতার পরামর্শ",
-      copyQ:"প্রশ্ন কপি করক",print:"PDF সংরক্ষণ",retrans:"ভাষা সলনি করক",neu:"নতুন রিপোর্ট",lang:"ভাষা",
-      reading:"রিপোর্ট পড়ি আছো…",translating:"অনুবাদ করি আছো…",copied:"✓ কপি হল"}
-};
-function t(key){ return (UI[currentLang]&&UI[currentLang][key]) || UI.en[key]; }
+const IS_LOCAL_PREVIEW=["localhost","127.0.0.1",""].includes(location.hostname);
+const LANGS=getEnabledLocales({reviewedOnly:!IS_LOCAL_PREVIEW});
+const storedLang=getLocale(localStorage.getItem("lumen_lang")||DEFAULT_LOCALE).code;
+let currentLang=LANGS.some(locale=>locale.code===storedLang)?storedLang:DEFAULT_LOCALE;
+function t(key){return translate(currentLang,key);}
 
 function renderLangChips(){
   const box=$("langChips"); box.innerHTML="";
@@ -313,27 +286,41 @@ function renderLangChips(){
   });
 }
 function setLang(code){
-  currentLang=code;
-  try{localStorage.setItem("lumen_lang",code);}catch(e){}
-  const L=LANGS.find(x=>x.code===code);
-  document.body.classList.toggle("lang-indic",!!(L&&L.indic));
-  document.documentElement.lang=code;
+  currentLang=getLocale(code).code;
+  try{localStorage.setItem("lumen_lang",currentLang);}catch(e){}
+  const L=getLocale(currentLang);
+  document.body.classList.toggle("lang-indic",currentLang!=="en");
+  document.body.classList.toggle("lang-ur",currentLang==="ur");
+  document.documentElement.lang=currentLang;
+  document.documentElement.dir=L.dir;
   renderLangChips();
   applyUIStrings();
 }
 function applyUIStrings(){
   $("go").textContent=t("explain");
   $("dzTitle").textContent=t("drop");
-  $("dzSub").textContent=t("sub");
+  $("dzSub").textContent=t("uploadHint");
   $("hFindings").textContent=t("findings");
   $("hMeaning").textContent=t("meaning");
   $("hQuestions").textContent=t("questions");
   $("hLifestyle").textContent=t("lifestyle");
-  $("copyQLbl").textContent=t("copyQ");
-  $("printLbl").textContent=t("print");
-  $("retransLbl").textContent=t("retrans");
-  $("newLbl").textContent=t("neu");
-  $("langLbl").textContent=t("lang");
+  $("copyQLbl").textContent=t("copyQuestions");
+  $("printLbl").textContent=t("savePdf");
+  $("retransLbl").textContent=t("changeLanguage");
+  $("newLbl").textContent=t("newReport");
+  $("langLbl").textContent=t("language");
+  $("eyebrow").textContent=t("eyebrow");
+  $("heroTitle").textContent=t("heroTitle");
+  $("heroEmphasis").textContent=t("heroEmphasis");
+  $("heroP").textContent=t("heroBody");
+  $("t1").textContent=t("neverStored");
+  $("t2").textContent=LANGS.length+" "+(LANGS.length===1?t("language").toLocaleLowerCase(currentLang):t("languages"));
+  $("t3").textContent=t("notDiagnosis");
+  $("historyTitle").textContent=t("recentReports");
+  $("clearHist").textContent=t("clearHistory");
+  $("disclaimerTitle").textContent=t("disclaimerTitle");
+  $("disclaimerBody").textContent=t("disclaimerBody");
+  renderThumbs();
 }
 
 /* ---------------- theme ---------------- */
@@ -354,7 +341,8 @@ $("themeBtn").onclick=()=>{
 
 /* ---------------- upload ---------------- */
 const MAX_PAGES=5;
-let pages=[]; // {b64, mime, dataUrl}
+const MAX_PAYLOAD_CHARS=3_800_000;
+let pages=[]; // {source, b64, mime, dataUrl}
 const drop=$("drop"),fileIn=$("file"),go=$("go");
 
 drop.onclick=()=>fileIn.click();
@@ -367,59 +355,99 @@ document.addEventListener("paste",e=>{
   if(items.length) handleFiles(items.map(i=>i.getAsFile()));
 });
 
-function handleFiles(list){
+async function handleFiles(list){
   const files=[...list].filter(f=>f&&f.type.indexOf("image/")===0);
-  if(!files.length){setStatus("Please upload image files (JPG or PNG).",true);return;}
-  files.slice(0,MAX_PAGES-pages.length).forEach(readOne);
+  if(!files.length){setStatus(t("invalidFiles"),true);return;}
+  const available=MAX_PAGES-pages.length;
+  if(files.length>available)setStatus(t("tooManyPages"),true);
+  const selected=files.slice(0,available);
+  try{
+    const target=Math.floor(MAX_PAYLOAD_CHARS/Math.max(pages.length+selected.length,1));
+    const newPages=await Promise.all(selected.map(file=>readOne(file,target)));
+    pages.push(...newPages);renderThumbs();updateGo();setStatus("");
+  }catch(e){setStatus(t("invalidFiles"),true);}
 }
-function readOne(f){
-  const r=new FileReader();
-  r.onload=()=>{
-    const img=new Image();
-    img.onload=()=>{
-      const MAX=1600,sc=Math.min(1,MAX/Math.max(img.width,img.height));
-      const c=document.createElement("canvas");
-      c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
-      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
-      const url=c.toDataURL("image/jpeg",0.9);
-      pages.push({b64:url.split(",")[1],mime:"image/jpeg",dataUrl:url});
-      renderThumbs();updateGo();setStatus("");
-    };
-    img.src=r.result;
-  };
-  r.readAsDataURL(f);
+function fileDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file);
+  });
+}
+function loadImage(source){
+  return new Promise((resolve,reject)=>{
+    const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=source;
+  });
+}
+async function compressSource(source,targetChars){
+  const image=await loadImage(source);
+  let scale=Math.min(1,1600/Math.max(image.width,image.height)),quality=.86,url="";
+  for(let attempt=0;attempt<9;attempt++){
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(image.width*scale));
+    canvas.height=Math.max(1,Math.round(image.height*scale));
+    canvas.getContext("2d").drawImage(image,0,0,canvas.width,canvas.height);
+    url=canvas.toDataURL("image/jpeg",quality);
+    if(url.length<=targetChars)return url;
+    scale*=.82;quality=Math.max(.55,quality-.04);
+  }
+  return url;
+}
+async function readOne(file,target){
+  const source=await fileDataUrl(file);
+  const url=await compressSource(source,target);
+  return {source,b64:url.split(",")[1],mime:"image/jpeg",dataUrl:url};
+}
+async function prepareImages(){
+  const target=Math.floor(MAX_PAYLOAD_CHARS/pages.length);
+  const prepared=[];
+  for(const page of pages){
+    const url=await compressSource(page.source,target);
+    page.dataUrl=url;page.b64=url.split(",")[1];page.mime="image/jpeg";
+    prepared.push({data:page.b64,mime:page.mime});
+  }
+  if(prepared.reduce((sum,page)=>sum+page.data.length,0)>MAX_PAYLOAD_CHARS)throw new Error(t("payloadTooLarge"));
+  renderThumbs();
+  return prepared;
 }
 function renderThumbs(){
   const box=$("thumbs");box.innerHTML="";
   pages.forEach((p,i)=>{
     const d=document.createElement("div");d.className="thumb";
-    const im=document.createElement("img");im.src=p.dataUrl;im.alt="Page "+(i+1);
-    const b=document.createElement("button");b.innerHTML="&times;";b.title="Remove";
+    const im=document.createElement("img");im.src=p.dataUrl;im.alt=t("page")+" "+(i+1);
+    const b=document.createElement("button");b.innerHTML="&times;";b.title=t("remove");b.setAttribute("aria-label",t("remove")+" "+t("page")+" "+(i+1));
     b.onclick=ev=>{ev.stopPropagation();pages.splice(i,1);renderThumbs();updateGo();};
     d.appendChild(im);d.appendChild(b);box.appendChild(d);
   });
 }
-function updateGo(){go.disabled=pages.length===0;}
+function updateGo(){
+  go.disabled=pages.length===0;
+  $("uploadMeta").textContent=pages.length?pages.length+" / "+MAX_PAGES+" "+t("page"):"";
+}
 function setStatus(msg,err,busy){
-  $("status").innerHTML=(busy?'<span class="pulse"></span>':"")+msg;
-  $("status").className=err?"err":"";
+  const status=$("status");status.textContent="";
+  if(busy){const pulse=document.createElement("span");pulse.className="pulse";status.appendChild(pulse);}
+  status.appendChild(document.createTextNode(msg||""));
+  status.className=err?"err":"";
 }
 
 /* ---------------- analyse ---------------- */
 let lastReport=null;
 
-async function analyse(){
+const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",invalid_image:"invalidFiles"};
+async function analyse(statusKey="reading"){
   if(!pages.length) return;
   go.disabled=true;
-  setStatus(t("reading"),false,true);
-  const langPrompt=(LANGS.find(l=>l.code===currentLang)||LANGS[0]).prompt;
+  setStatus(t(statusKey),false,true);
   try{
+    const images=await prepareImages();
+    const payload=JSON.stringify({images,locale:currentLang});
+    if(payload.length>4_100_000)throw new Error(t("payloadTooLarge"));
     const res=await fetch("/api/analyze",{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({image:pages[0].b64,mime:pages[0].mime,language:langPrompt})
+      body:payload
     });
     const j=await res.json();
-    if(!res.ok) throw new Error(j.error||("HTTP "+res.status));
+    if(!res.ok) throw new Error(ERROR_KEYS[j.code]?t(ERROR_KEYS[j.code]):(j.error||("HTTP "+res.status)));
     lastReport=j.report;
     render(j.report,j.provider);
     saveHistory(j.report);
@@ -432,9 +460,8 @@ async function analyse(){
 go.onclick=analyse;
 
 $("retransBtn").onclick=async()=>{
-  if(!pages.length){setStatus("Upload a report first.",true);return;}
-  setStatus(t("translating"),false,true);
-  await analyse();
+  if(!pages.length){setStatus(t("uploadFirst"),true);return;}
+  await analyse("translating");
 };
 
 const ICONS={ok:"✅",attention:"⚠️",urgent:"🚨"};
@@ -460,8 +487,8 @@ function render(r,provider){
       row.querySelector(".name b").textContent=x.test||"";
       row.querySelector(".name span").textContent=x.meaningShort||"";
       row.querySelector(".val .v").textContent=(x.value||"")+(x.unit?" "+x.unit:"");
-      row.querySelector(".val small").textContent=x.refRange?("ref: "+x.refRange):"";
-      const c=row.querySelector(".chip-status");c.classList.add(st);c.textContent=st;
+      row.querySelector(".val small").textContent=x.refRange?(t("reference")+": "+x.refRange):"";
+      const c=row.querySelector(".chip-status");c.classList.add(st);c.textContent=t(st);
       f.appendChild(row);
       if(x.explain){const ex=document.createElement("div");ex.className="finding-explain";ex.textContent=x.explain;f.appendChild(ex);}
     });
@@ -496,14 +523,14 @@ function saveHistory(r){
 }
 function renderHist(){
   const h=loadHist(),box=$("histList");box.innerHTML="";
-  if(!h.length){box.innerHTML='<div style="padding:14px 16px;color:var(--ink-soft);font-size:.88rem">No saved reports yet.</div>';return;}
+  if(!h.length){const empty=document.createElement("div");empty.style.cssText="padding:14px 16px;color:var(--ink-soft);font-size:.88rem";empty.textContent=t("noReports");box.appendChild(empty);return;}
   h.forEach(item=>{
     const d=document.createElement("div");d.className="histitem";
-    const dt=new Date(item.t).toLocaleString();
+    const dt=new Date(item.t).toLocaleString(currentLang);
     d.innerHTML='<div class="hbadge"></div><div class="hmain"><b></b><span></span></div>';
     const bg=item.overall==="urgent"?"var(--red-soft)":item.overall==="attention"?"var(--amber-soft)":"var(--green-soft)";
     const bd=d.querySelector(".hbadge");bd.style.background=bg;bd.textContent=ICONS[item.overall]||"✅";
-    d.querySelector(".hmain b").textContent=item.headline||"Report";
+    d.querySelector(".hmain b").textContent=item.headline||t("report");
     d.querySelector(".hmain span").textContent=(item.reportType?item.reportType+" · ":"")+dt;
     d.onclick=()=>{render(item.report,null);$("history").style.display="none";};
     box.appendChild(d);
@@ -523,7 +550,7 @@ $("copyQ").onclick=async()=>{
   const qs=[...document.querySelectorAll("#questions .q")].map(e=>"• "+e.textContent).join("\n");
   try{await navigator.clipboard.writeText(qs);
     $("copyQLbl").textContent=t("copied");
-    setTimeout(()=>{$("copyQLbl").textContent=t("copyQ");},1800);
+    setTimeout(()=>{$("copyQLbl").textContent=t("copyQuestions");},1800);
   }catch(e){}
 };
 $("printBtn").onclick=()=>window.print();
@@ -540,5 +567,3 @@ setLang(currentLang);
 </script>
 </body>
 </html>
-
-
