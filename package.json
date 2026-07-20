@@ -1,0 +1,14 @@
+{
+  "name": "lumen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lumen — your medical report, explained in plain language, in your language.",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  }
+}
