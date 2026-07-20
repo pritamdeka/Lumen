@@ -46,8 +46,8 @@ const server = http.createServer(async (request, response) => {
   try {
     if (url.pathname === "/" || url.pathname === "/index.html") {
       let html = await readFile(join(root, "index.html"), "utf8");
-      if (url.searchParams.get("confidence") === "1") {
-        html = html.replace("</script>", `\nrenderReview(${JSON.stringify(extraction)});\n</script>`);
+      if (url.searchParams.get("demo") === "1") {
+        html = html.replace("</script>", `\nlastExtraction=${JSON.stringify(extraction)};currentAnalysisId="fixture-report";requestExplanation(lastExtraction);\n</script>`);
       }
       response.writeHead(200, { "Content-Type": mimeTypes[".html"] });
       response.end(html);
@@ -65,4 +65,4 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(port, "127.0.0.1", () => console.log(`Lumen preview fixture: http://localhost:${port}/?confidence=1`));
+server.listen(port, "127.0.0.1", () => console.log(`Lumen preview fixture: http://localhost:${port}/?demo=1`));

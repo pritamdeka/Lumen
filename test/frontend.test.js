@@ -26,13 +26,12 @@ test("frontend contains direction and upload accessibility hooks", async () => {
   assert.match(html, /LOCALES\.filter\(locale=>locale\.enabled\)/);
 });
 
-test("frontend implements extraction review before explanation", async () => {
+test("frontend explains extracted values without a blocking confidence review", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /stage:"extract"/);
   assert.match(html, /stage:"explain"/);
-  assert.match(html, /id="reviewPanel"/);
-  assert.match(html, /collectConfirmedExtraction/);
-  assert.match(html, /item\.confidence!=="high"/);
+  assert.match(html, /await requestExplanation\(json\.extraction\)/);
+  assert.doesNotMatch(html, /id="reviewPanel"|collectConfirmedExtraction|renderReview|confirmReview/);
 });
 
 test("frontend uses one accessible language picker and report dashboard", async () => {
@@ -41,11 +40,14 @@ test("frontend uses one accessible language picker and report dashboard", async 
   assert.equal(new Set(ids).size, ids.length, "HTML ids are unique");
   assert.match(html, /<dialog id="languageDialog"/);
   assert.match(html, /id="languageOptions" role="radiogroup"/);
+  assert.match(html, /id="langChips"/);
+  assert.match(html, /function renderLangChips\(\)/);
+  assert.match(html, /\[\["all","all"\],\["outside","outsideRange"\]\]/);
   assert.match(html, /showModal\(\)/);
   assert.match(html, /role="tablist"/);
   assert.match(html, /id="summaryViz"/);
   assert.match(html, /id="trends"/);
-  assert.doesNotMatch(html, /id="langChips"|const ICONS=|✅|⚠️|🚨|content:"\\2713"/);
+  assert.doesNotMatch(html, /const ICONS=|✅|⚠️|🚨|content:"\\2713"/);
 });
 
 test("frontend includes visit toolkit accessibility fallbacks", async () => {
