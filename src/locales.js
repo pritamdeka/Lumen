@@ -12,7 +12,7 @@ export const REQUIRED_UI_KEYS = [
   "all", "outsideRange", "uncertain", "confirmed", "summary", "attention", "trends",
   "noTrends", "date", "glossary", "readAloud", "stopReading", "speechUnavailable",
   "doctorSummary", "followUpReminder", "reminderDate", "addToCalendar", "selectDate",
-  "rangePosition", "trendTable", "visitToolkit"
+  "rangePosition", "trendTable", "visitToolkit", "requestFailed"
 ];
 
 const en = {
@@ -100,6 +100,22 @@ const featureTranslations = {
   ur: { overview:"خلاصہ",nextSteps:"اگلے اقدامات",chooseLanguage:"زبان منتخب کریں",close:"بند کریں",all:"سب",outsideRange:"حد سے باہر",uncertain:"غیر یقینی",confirmed:"تصدیق شدہ",summary:"نتائج کا خلاصہ",attention:"توجہ درکار",trends:"مقامی رجحانات",noTrends:"رجحان دیکھنے کے لیے ایک اور مماثل رپورٹ شامل کریں۔",date:"تاریخ",glossary:"طبی اصطلاحات",readAloud:"سنیں",stopReading:"پڑھنا روکیں",speechUnavailable:"اس آلے پر اس زبان میں پڑھ کر سنانے کی سہولت دستیاب نہیں۔",doctorSummary:"ڈاکٹر ملاقات کا خلاصہ",followUpReminder:"فالو اپ یاد دہانی",reminderDate:"یاد دہانی کی تاریخ",addToCalendar:"کیلنڈر میں شامل کریں",selectDate:"پہلے یاد دہانی کی تاریخ منتخب کریں۔",rangePosition:"رپورٹ کی حد میں مقام",trendTable:"رجحان کی اقدار",visitToolkit:"ملاقات کے اوزار" }
 };
 
+const errorTranslations = {
+  en: { requestFailed: "Something went wrong. Please try again." },
+  hi: { requestFailed: "कुछ गलत हुआ। कृपया फिर से कोशिश करें।" },
+  bn: { requestFailed: "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।" },
+  as: { requestFailed: "কিবা ভুল হৈছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।" },
+  ta: { requestFailed: "ஏதோ தவறு ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்." },
+  te: { requestFailed: "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి." },
+  mr: { requestFailed: "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा." },
+  kn: { requestFailed: "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ." },
+  gu: { requestFailed: "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો." },
+  ml: { requestFailed: "എന്തോ പിശക് സംഭവിച്ചു. വീണ്ടും ശ്രമിക്കുക." },
+  pa: { requestFailed: "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।" },
+  or: { requestFailed: "କିଛି ଭୁଲ ହୋଇଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।" },
+  ur: { requestFailed: "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔" }
+};
+
 const metadata = [
   ["en", "English", "simple English", "ltr", "Latin", true],
   ["hi", "हिन्दी", "Hindi in Devanagari script", "ltr", "Devanagari", false],
@@ -118,7 +134,7 @@ const metadata = [
 
 export const LOCALES = metadata.map(([code, label, prompt, dir, script, reviewed]) => ({
   code, label, prompt, dir, script, reviewed, enabled: true,
-  ui: { ...(code === "en" ? en : translations[code]), ...reviewTranslations[code], ...featureTranslations[code] }
+  ui: { ...(code === "en" ? en : translations[code]), ...reviewTranslations[code], ...featureTranslations[code], ...errorTranslations[code] }
 }));
 
 export const DEFAULT_LOCALE = "en";

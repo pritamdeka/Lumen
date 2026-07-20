@@ -16,6 +16,8 @@ test("frontend references only declared localization keys", async () => {
   const used = [...html.matchAll(/\bt\("([A-Za-z]+)"\)/g)].map(match => match[1]);
   assert.deepEqual([...new Set(used.filter(key => !REQUIRED_UI_KEYS.includes(key)))], []);
   assert.doesNotMatch(html, /LEGACY_(LANGS|UI)|pages\[0\]|language\s*:\s*langPrompt/);
+  assert.doesNotMatch(html, /\b(res|response)\.json\(\)/);
+  assert.match(html, /postAnalysis\(fetch,"\/api\/analyze",payload\)/);
 });
 
 test("frontend contains direction and upload accessibility hooks", async () => {

@@ -99,6 +99,15 @@ test("parseReport validates shape, locale, and target script", () => {
   assert.throws(() => parseReport(JSON.stringify(wrongScript), "hi"), /Wrong output script/);
 });
 
+test("model-output parsers reject empty, plain-text, HTML, and truncated data cleanly", () => {
+  for (const value of ["", "An error occurred", "<!doctype html><h1>Error</h1>", "{", "[]", "null"]) {
+    assert.throws(() => parseExtraction(value));
+    assert.throws(() => parseReport(value, "en"));
+  }
+  assert.throws(() => parseExtraction('{"findings":"not-an-array"}'), /Invalid extraction data/);
+  assert.throws(() => parseReport('{"outputLocale":"en","overall":"ok"}', "en"), /Invalid report shape/);
+});
+
 test("machine-read extraction remains authoritative for numeric visual metadata", () => {
   const parsed = report("en");
   parsed.findings = [{ test: "Translated test", value: "wrong", unit: "wrong", refRange: "wrong", status: "normal" }];
@@ -187,6 +196,60 @@ test("handler completes extraction then automatic explanation without resending 
     assert.equal(calls[0].contents[0].parts.length, 2);
     assert.equal(calls[1].contents[0].parts.length, 1);
     assert.match(calls[1].contents[0].parts[0].text, /R\.B\.S/);
+  } finally {
+    global.fetch = oldFetch;
+    if (oldGemini === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldGemini;
+    if (oldGroq === undefined) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = oldGroq;
+  }
+});
+
+test("handler sanitizes malformed provider responses across failure classes", async () => {
+  const oldFetch = global.fetch;
+  const oldGemini = process.env.GEMINI_API_KEY;
+  const oldGroq = process.env.GROQ_API_KEY;
+  process.env.GEMINI_API_KEY = "gemini-test-key";
+  delete process.env.GROQ_API_KEY;
+  const cases = [
+    { name: "transport JSON parser failure", run: async () => { throw new SyntaxError("Unexpected token 'A'"); } },
+    { name: "missing provider envelope", run: async () => ({}) },
+    { name: "plain-text model failure", run: async () => ({ candidates: [{ content: { parts: [{ text: "An error occurred" }] } }] }) },
+    { name: "truncated model JSON", run: async () => ({ candidates: [{ content: { parts: [{ text: "{" }] } }] }) },
+    { name: "wrong report schema", run: async () => ({ candidates: [{ content: { parts: [{ text: '{"outputLocale":"en","overall":"ok"}' }] } }] }) }
+  ];
+  try {
+    for (const [index, fixture] of cases.entries()) {
+      global.fetch = async () => ({ ok: true, json: fixture.run });
+      const response = mockResponse();
+      await handler({ method: "POST", headers: { "x-forwarded-for": `provider-failure-${index}` }, body: { locale: "en", images: [{ data: "page", mime: "image/jpeg" }] } }, response);
+      assert.equal(response.statusCode, 502, fixture.name);
+      assert.deepEqual(response.body, { code: "providers_failed", error: "The analysis service is temporarily unavailable. Please try again." }, fixture.name);
+      assert.doesNotMatch(JSON.stringify(response.body), /Unexpected token|is not valid JSON|An error occurred|<html/i, fixture.name);
+    }
+  } finally {
+    global.fetch = oldFetch;
+    if (oldGemini === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldGemini;
+    if (oldGroq === undefined) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = oldGroq;
+  }
+});
+
+test("handler falls back when a provider returns invalid transport JSON", async () => {
+  const oldFetch = global.fetch;
+  const oldGemini = process.env.GEMINI_API_KEY;
+  const oldGroq = process.env.GROQ_API_KEY;
+  process.env.GEMINI_API_KEY = "gemini-test-key";
+  process.env.GROQ_API_KEY = "groq-test-key";
+  let calls = 0;
+  global.fetch = async url => {
+    calls++;
+    if (String(url).includes("googleapis")) return { ok: true, json: async () => { throw new SyntaxError("Unexpected token '<'"); } };
+    return { ok: true, json: async () => ({ choices: [{ message: { content: JSON.stringify(report("en")) } }] }) };
+  };
+  try {
+    const response = mockResponse();
+    await handler({ method: "POST", headers: { "x-forwarded-for": "provider-invalid-json-fallback" }, body: { locale: "en", images: [{ data: "page", mime: "image/jpeg" }] } }, response);
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.body.provider, "Groq");
+    assert.equal(calls, 2);
   } finally {
     global.fetch = oldFetch;
     if (oldGemini === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldGemini;

@@ -326,6 +326,7 @@
 "use strict";
 import { DEFAULT_LOCALE, LOCALES, getLocale, translate } from "./src/locales.js";
 import { buildTrendSeries, createReminderIcs, filterFindings, rangePosition, speechText, statusGroup, summarizeFindings } from "./src/report-tools.js";
+import { postAnalysis } from "./src/http.js";
 const $=id=>document.getElementById(id);
 
 const ICON_PATHS={
@@ -528,12 +529,10 @@ let lastReport=null;
 let lastExtraction=null;
 let currentAnalysisId=null;
 
-const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst"};
+const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",no_provider:"requestFailed",rate_limited:"requestFailed"};
 async function apiRequest(payload){
-  const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-  const json=await res.json();
-  if(!res.ok)throw new Error(ERROR_KEYS[json.code]?t(ERROR_KEYS[json.code]):(json.error||("HTTP "+res.status)));
-  return json;
+  try{return await postAnalysis(fetch,"/api/analyze",payload);}
+  catch(error){const key=ERROR_KEYS[error?.code]||"requestFailed";throw new Error(t(key));}
 }
 async function analyse(){
   if(!pages.length) return;

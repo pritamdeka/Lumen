@@ -27,6 +27,11 @@ function json(response, value) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
   if (url.pathname === "/api/analyze" && request.method === "POST") {
+    if (String(request.headers.cookie || "").includes("lumen_fixture_error=plain")) {
+      response.writeHead(502, { "Content-Type": "text/plain; charset=utf-8" });
+      response.end("An error occurred while processing the request");
+      return;
+    }
     let body = "";
     for await (const chunk of request) body += chunk;
     const input = JSON.parse(body || "{}");
@@ -49,7 +54,10 @@ const server = http.createServer(async (request, response) => {
       if (url.searchParams.get("demo") === "1") {
         html = html.replace("</script>", `\nlastExtraction=${JSON.stringify(extraction)};currentAnalysisId="fixture-report";requestExplanation(lastExtraction);\n</script>`);
       }
-      response.writeHead(200, { "Content-Type": mimeTypes[".html"] });
+      const headers = { "Content-Type": mimeTypes[".html"] };
+      if (url.searchParams.get("error") === "plain") headers["Set-Cookie"] = "lumen_fixture_error=plain; Path=/; SameSite=Lax";
+      else headers["Set-Cookie"] = "lumen_fixture_error=; Path=/; Max-Age=0; SameSite=Lax";
+      response.writeHead(200, headers);
       response.end(html);
       return;
     }

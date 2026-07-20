@@ -84,6 +84,14 @@ function cleanReferenceKind(value) {
   return ["interval", "upper", "lower", "text"].includes(value) ? value : "text";
 }
 
+async function readProviderJson(response, providerName) {
+  try {
+    return await response.json();
+  } catch {
+    throw new Error(`${providerName} returned an invalid response`);
+  }
+}
+
 export function normalizeExtraction(value) {
   if (!value || typeof value !== "object" || !Array.isArray(value.findings) || value.findings.length > 100) {
     const error = new Error("Invalid extraction data");
@@ -190,7 +198,7 @@ async function callGemini(key, prompt, images) {
     }
   );
   if (!response.ok) throw new Error("Gemini " + response.status);
-  const json = await response.json();
+  const json = await readProviderJson(response, "Gemini");
   const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("Gemini empty");
   return text;
@@ -213,7 +221,7 @@ async function callOpenAICompat(name, url, key, model, prompt, images) {
     })
   });
   if (!response.ok) throw new Error(`${name} ${response.status}`);
-  const json = await response.json();
+  const json = await readProviderJson(response, name);
   const text = json.choices?.[0]?.message?.content;
   if (!text) throw new Error(`${name} empty`);
   return text;
@@ -333,5 +341,5 @@ export default async function handler(req, res) {
       lastError = error;
     }
   }
-  sendError(res, 502, "providers_failed", "All AI providers failed: " + String(lastError?.message || lastError));
+  sendError(res, 502, "providers_failed", "The analysis service is temporarily unavailable. Please try again.");
 }
