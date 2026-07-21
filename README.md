@@ -41,12 +41,12 @@ lumen-app/
 
 | Order | Provider | Model | Notes |
 |---|---|---|---|
-| 1 | Google Gemini | `gemini-2.5-flash` | Free tier, 1,500 req/day |
-| 2 | Groq | `llama-4-scout-17b-16e-instruct` | Free tier, very fast |
-| 3 | DeepInfra | `google/gemma-4-26B-A4B-it` | MoE, ~$0.07/1M input |
-| 4 | OpenRouter | `qwen2.5-vl-72b-instruct:free` | Free tier |
+| 1 | Google Gemini | `gemini-2.5-flash` | Native structured JSON |
+| 2 | Groq | `qwen/qwen3.6-27b` | Vision and JSON object mode |
+| 3 | DeepInfra | `google/gemma-4-26B-A4B-it` | Vision and JSON object mode |
+| 4 | OpenRouter | `qwen/qwen2.5-vl-72b-instruct` | Vision and JSON object mode |
 
-Only `GEMINI_API_KEY` is required; any provider whose key is absent is skipped.
+Configure at least one provider key. Providers whose keys are absent are skipped, so Gemini is optional when another provider is configured.
 
 ---
 
@@ -92,7 +92,9 @@ cp .env.example .env        # fill in your keys
 vercel dev                  # serves on http://localhost:3000
 ```
 
-Run the zero-dependency test suite with `npm test`. The existing 13 languages remain available. Spanish, French, German, Italian, and European Portuguese are included as disabled drafts until native-speaker sign-off in `docs/translation-review.md`.
+Run the zero-dependency test suite with `npm test`. It validates every provider request and response contract, fallback handling, malformed output handling, and both analysis stages without making billable network calls. The existing 13 languages remain available. Spanish, French, German, Italian, and European Portuguese are included as disabled drafts until native-speaker sign-off in `docs/translation-review.md`.
+
+After exporting provider keys in your terminal, run `npm run test:providers:live` for an opt-in live smoke test. It sends only a generated blank test image, never a medical report. Do not paste API keys into source files, issues, or chat.
 
 Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 

@@ -11,6 +11,7 @@
     "dev": "vercel dev",
     "preview:fixture": "node test-fixtures/preview-server.js",
     "test": "node --test",
+    "test:providers:live": "node scripts/provider-smoke.js",
     "deploy": "vercel --prod"
   }
 }

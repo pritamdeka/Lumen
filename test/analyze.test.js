@@ -10,6 +10,7 @@ import handler, {
   normalizeExtraction,
   normalizeRequest,
   parseExtraction,
+  parseModelObject,
   parseReport
 } from "../api/analyze.js";
 import { SCRIPT_FIXTURES } from "../test-fixtures/scripts.js";
@@ -108,6 +109,13 @@ test("model-output parsers reject empty, plain-text, HTML, and truncated data cl
   }
   assert.throws(() => parseExtraction('{"findings":"not-an-array"}'), /Invalid extraction data/);
   assert.throws(() => parseReport('{"outputLocale":"en","overall":"ok"}', "en"), /Invalid report shape/);
+});
+
+test("model JSON parser safely handles fences, prose, braces in strings, and multiple objects", () => {
+  assert.deepEqual(parseModelObject('\uFEFF```json\n{"message":"value with } brace","ok":true}\n```'), { message: "value with } brace", ok: true });
+  assert.deepEqual(parseModelObject('preface {"first":1} trailing {"second":2}'), { first: 1 });
+  assert.throws(() => parseModelObject("prefix {\"broken\": true"), /No valid JSON object/);
+  assert.throws(() => parseModelObject("[]"), /No valid JSON object/);
 });
 
 test("machine-read extraction remains authoritative for numeric visual metadata", () => {
@@ -281,6 +289,57 @@ test("handler falls back when a provider returns invalid transport JSON", async 
     global.fetch = oldFetch;
     if (oldGemini === undefined) delete process.env.GEMINI_API_KEY; else process.env.GEMINI_API_KEY = oldGemini;
     if (oldGroq === undefined) delete process.env.GROQ_API_KEY; else process.env.GROQ_API_KEY = oldGroq;
+  }
+});
+
+test("handler completes extraction and explanation with each provider configured alone", async () => {
+  const keys = ["GEMINI_API_KEY", "GROQ_API_KEY", "DEEPINFRA_API_KEY", "OPENROUTER_API_KEY"];
+  const saved = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  const oldFetch = global.fetch;
+  const providers = [
+    ["GEMINI_API_KEY", "Gemini", "googleapis"],
+    ["GROQ_API_KEY", "Groq", "api.groq.com"],
+    ["DEEPINFRA_API_KEY", "DeepInfra", "api.deepinfra.com"],
+    ["OPENROUTER_API_KEY", "OpenRouter", "openrouter.ai"]
+  ];
+  try {
+    for (const key of keys) delete process.env[key];
+    for (const [envKey, providerName, host] of providers) {
+      for (const key of keys) delete process.env[key];
+      process.env[envKey] = "test-secret";
+      let callNumber = 0;
+      global.fetch = async (url, options) => {
+        callNumber++;
+        assert.match(String(url), new RegExp(host.replaceAll(".", "\\.")));
+        JSON.parse(options.body);
+        const text = callNumber === 1
+          ? JSON.stringify({ isMedical: true, reportType: "Lab", findings: [{ sourcePage: 1, test: "Hb", value: "12.5", unit: "g/dL", refRange: "12-16", confidence: "high" }] })
+          : JSON.stringify({ ...report("en"), findings: [{ findingId: "finding-1", test: "Haemoglobin", meaningShort: "Blood protein", status: "normal", explain: "" }] });
+        return providerName === "Gemini"
+          ? { ok: true, status: 200, json: async () => ({ candidates: [{ finishReason: "STOP", content: { parts: [{ text }] } }] }) }
+          : { ok: true, status: 200, json: async () => ({ choices: [{ finish_reason: "stop", message: { content: text } }] }) };
+      };
+
+      const extractionResponse = mockResponse();
+      await handler({ method: "POST", headers: { "x-forwarded-for": `only-${providerName}-extract` }, body: { stage: "extract", locale: "en", images: [{ data: "page", mime: "image/jpeg" }] } }, extractionResponse);
+      assert.equal(extractionResponse.statusCode, 200, `${providerName} extraction`);
+      assert.equal(extractionResponse.body.provider, providerName);
+      assert.equal(extractionResponse.body.extraction.findings[0].value, "12.5");
+
+      const explanationResponse = mockResponse();
+      await handler({ method: "POST", headers: { "x-forwarded-for": `only-${providerName}-explain` }, body: { stage: "explain", locale: "en", extraction: extractionResponse.body.extraction } }, explanationResponse);
+      assert.equal(explanationResponse.statusCode, 200, `${providerName} explanation`);
+      assert.equal(explanationResponse.body.provider, providerName);
+      assert.equal(explanationResponse.body.report.totalFindings, 1);
+      assert.equal(explanationResponse.body.report.findings[0].value, "12.5");
+      assert.equal(callNumber, 2);
+    }
+  } finally {
+    global.fetch = oldFetch;
+    for (const key of keys) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
   }
 });
 

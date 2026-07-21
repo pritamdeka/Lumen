@@ -1,0 +1,119 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  buildOpenAIRequest,
+  callProvider,
+  extractGeminiText,
+  extractOpenAIText,
+  getConfiguredProviders,
+  MAX_PROVIDER_OUTPUT_TOKENS,
+  PROVIDER_DEFINITIONS
+} from "../api/providers.js";
+
+const EXPECTED_MODELS = {
+  Gemini: null,
+  Groq: "qwen/qwen3.6-27b",
+  DeepInfra: "google/gemma-4-26B-A4B-it",
+  OpenRouter: "qwen/qwen2.5-vl-72b-instruct"
+};
+
+function response(json, overrides = {}) {
+  return { ok: true, status: 200, json: async () => json, ...overrides };
+}
+
+test("provider registry has one current, credential-free definition per provider", () => {
+  assert.deepEqual(PROVIDER_DEFINITIONS.map(item => item.name), ["Gemini", "Groq", "DeepInfra", "OpenRouter"]);
+  for (const provider of PROVIDER_DEFINITIONS) {
+    assert.equal(provider.model || null, EXPECTED_MODELS[provider.name]);
+    assert.match(provider.endpoint, /^https:\/\//);
+    assert.equal("key" in provider, false);
+  }
+  assert.equal(PROVIDER_DEFINITIONS.some(item => /llama-4-scout|Qwen2\.5-VL-32B|:free/.test(item.model || "")), false);
+});
+
+test("configured providers preserve fallback order and ignore blank keys", () => {
+  const configured = getConfiguredProviders({
+    GEMINI_API_KEY: " gemini-secret ",
+    GROQ_API_KEY: "",
+    DEEPINFRA_API_KEY: "deepinfra-secret",
+    OPENROUTER_API_KEY: "   "
+  });
+  assert.deepEqual(configured.map(item => item.name), ["Gemini", "DeepInfra"]);
+  assert.deepEqual(configured.map(item => item.key), ["gemini-secret", "deepinfra-secret"]);
+});
+
+test("OpenAI-compatible requests use JSON mode and preserve every image in order", () => {
+  for (const provider of PROVIDER_DEFINITIONS.filter(item => item.kind === "openai")) {
+    const body = buildOpenAIRequest(provider, "prompt", [
+      { data: "one", mime: "image/jpeg" },
+      { data: "two", mime: "image/png" }
+    ]);
+    assert.equal(body.model, EXPECTED_MODELS[provider.name]);
+    assert.deepEqual(body.response_format, { type: "json_object" });
+    assert.equal(body.max_tokens, MAX_PROVIDER_OUTPUT_TOKENS);
+    assert.equal(body.stream, false);
+    assert.equal(body.messages[0].content.length, 3);
+    assert.equal(body.messages[0].content[0].text, "prompt");
+    assert.equal(body.messages[0].content[1].image_url.url, "data:image/jpeg;base64,one");
+    assert.equal(body.messages[0].content[2].image_url.url, "data:image/png;base64,two");
+    if (provider.name === "Groq") assert.equal(body.reasoning_effort, "none");
+  }
+});
+
+test("text-only explanation requests use the broadly compatible string content shape", () => {
+  for (const provider of PROVIDER_DEFINITIONS.filter(item => item.kind === "openai")) {
+    const body = buildOpenAIRequest(provider, "explain this extraction", []);
+    assert.equal(body.messages[0].content, "explain this extraction");
+  }
+});
+
+test("Gemini parser combines text parts and detects empty, error, and truncated envelopes", () => {
+  assert.equal(extractGeminiText({ candidates: [{ content: { parts: [{ text: "{\"a\":" }, { text: "1}" }] } }] }), '{"a":1}');
+  assert.throws(() => extractGeminiText({ error: { message: "quota" } }), /quota/);
+  assert.throws(() => extractGeminiText({ candidates: [{ finishReason: "MAX_TOKENS" }] }), /truncated/);
+  assert.throws(() => extractGeminiText({ candidates: [] }), /empty/);
+});
+
+test("OpenAI-compatible parser supports string, content blocks, and legacy choice text", () => {
+  assert.equal(extractOpenAIText({ choices: [{ message: { content: '{"a":1}' } }] }, "Test"), '{"a":1}');
+  assert.equal(extractOpenAIText({ choices: [{ message: { content: [{ type: "text", text: '{"a":' }, { type: "text", text: "1}" }] } }] }, "Test"), '{"a":1}');
+  assert.equal(extractOpenAIText({ choices: [{ text: '{"a":1}' }] }, "Test"), '{"a":1}');
+  assert.throws(() => extractOpenAIText({ error: { message: "rate limited" } }, "Test"), /rate limited/);
+  assert.throws(() => extractOpenAIText({ choices: [{ finish_reason: "length", message: { content: "{}" } }] }, "Test"), /truncated/);
+  assert.throws(() => extractOpenAIText({ choices: [{ message: { refusal: "no" } }] }, "Test"), /refused/);
+  assert.throws(() => extractOpenAIText({ choices: [] }, "Test"), /empty/);
+});
+
+test("every provider adapter sends the expected authenticated request and returns JSON text", async () => {
+  for (const definition of PROVIDER_DEFINITIONS) {
+    const provider = { ...definition, key: `${definition.name}-secret` };
+    let captured;
+    const fetchMock = async (url, options) => {
+      captured = { url: String(url), options, body: JSON.parse(options.body) };
+      if (definition.kind === "gemini") {
+        return response({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] });
+      }
+      return response({ choices: [{ finish_reason: "stop", message: { content: '{"ok":true}' } }] });
+    };
+    assert.equal(await callProvider(provider, "prompt", [{ data: "page", mime: "image/webp" }], fetchMock), '{"ok":true}');
+    assert.equal(captured.options.method, "POST");
+    assert.equal(captured.options.headers.Accept, "application/json");
+    if (definition.kind === "gemini") {
+      assert.match(captured.url, /key=Gemini-secret$/);
+      assert.equal(captured.body.contents[0].parts[1].inline_data.data, "page");
+      assert.equal(captured.body.generationConfig.responseMimeType, "application/json");
+    } else {
+      assert.equal(captured.options.headers.Authorization, `Bearer ${definition.name}-secret`);
+      assert.equal(captured.body.messages[0].content[1].image_url.url, "data:image/webp;base64,page");
+    }
+  }
+});
+
+test("every provider adapter rejects HTTP, malformed transport, and provider-level failures", async () => {
+  for (const definition of PROVIDER_DEFINITIONS) {
+    const provider = { ...definition, key: "secret" };
+    await assert.rejects(callProvider(provider, "prompt", [], async () => response({}, { ok: false, status: 429 })), /HTTP 429/);
+    await assert.rejects(callProvider(provider, "prompt", [], async () => response(null, { json: async () => { throw new SyntaxError("html"); } })), /invalid JSON/);
+    await assert.rejects(callProvider(provider, "prompt", [], async () => response({ error: { message: "upstream unavailable" } })), /upstream unavailable/);
+  }
+});
