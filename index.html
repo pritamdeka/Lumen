@@ -538,7 +538,7 @@ let lastReport=null;
 let lastExtraction=null;
 let currentAnalysisId=null;
 
-const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",too_many_findings:"tooManyFindings",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",no_provider:"requestFailed",rate_limited:"requestFailed"};
+const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",too_many_findings:"tooManyFindings",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",analysis_timeout:"analysisTimeout",no_provider:"requestFailed",rate_limited:"requestFailed"};
 async function apiRequest(payload){
   try{return await postAnalysis(fetch,"/api/analyze",payload);}
   catch(error){const key=ERROR_KEYS[error?.code]||"requestFailed";throw new Error(t(key));}

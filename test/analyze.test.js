@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import handler, {
+  ANALYSIS_DEADLINE_MS,
   attachExtractionMetadata,
   buildExtractionPrompt,
   buildPrompt,
@@ -9,10 +10,14 @@ import handler, {
   MAX_IMAGE_DATA_CHARS,
   normalizeExtraction,
   normalizeRequest,
+  outputTokenLimit,
+  providerAttemptTimeout,
+  providerFailureResponse,
   parseExtraction,
   parseModelObject,
   parseReport
 } from "../api/analyze.js";
+import { config } from "../api/analyze.js";
 import { SCRIPT_FIXTURES } from "../test-fixtures/scripts.js";
 
 function report(locale = "en") {
@@ -153,6 +158,30 @@ test("authoritative merge preserves omitted and reordered findings and rejects i
 test("finding limits are explicit and never silently truncate", () => {
   assert.equal(normalizeExtraction({ findings: Array.from({ length: MAX_FINDINGS }, (_, index) => ({ test: `T${index}`, value: String(index) })) }).findings.length, MAX_FINDINGS);
   assert.throws(() => normalizeExtraction({ findings: Array.from({ length: MAX_FINDINGS + 1 }, () => ({})) }), { message: "Report contains too many findings" });
+});
+
+test("analysis duration and output budgets fit the Vercel deadline", () => {
+  assert.equal(config.maxDuration, 300);
+  assert.equal(ANALYSIS_DEADLINE_MS, 285_000);
+  assert.equal(outputTokenLimit({ stage: "extract" }), 16_384);
+  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: [] } }), 3_000);
+  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 50 }) } }), 6_000);
+  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 250 }) } }), 16_384);
+  assert.equal(providerAttemptTimeout(285_000, 1), 180_000);
+  assert.equal(providerAttemptTimeout(285_000, 2), 142_000);
+  assert.equal(providerAttemptTimeout(285_000, 4), 71_000);
+  assert.equal(providerAttemptTimeout(500, 1), 1_000);
+  assert.deepEqual(providerFailureResponse({ code: "provider_timeout" }), {
+    status: 504,
+    code: "analysis_timeout",
+    message: "The analysis provider took too long. Please try again."
+  });
+  assert.equal(providerFailureResponse(new Error("bad response")).code, "providers_failed");
+});
+
+test("deployment explicitly enables Fluid Compute for the 300-second duration", async () => {
+  const deployment = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
+  assert.equal(deployment.fluid, true);
 });
 
 test("handler rejects unsupported methods and malformed requests", async () => {

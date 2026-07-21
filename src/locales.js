@@ -103,10 +103,10 @@ const featureTranslations = {
 };
 
 const errorTranslations = {
-  en: { requestFailed: "Something went wrong. Please try again." },
+  en: { requestFailed: "Something went wrong. Please try again.", analysisTimeout: "The analysis is taking longer than expected. Please try again." },
   hi: { requestFailed: "कुछ गलत हुआ। कृपया फिर से कोशिश करें।" },
   bn: { requestFailed: "কিছু ভুল হয়েছে। আবার চেষ্টা করুন।" },
-  as: { requestFailed: "কিবা ভুল হৈছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।" },
+  as: { requestFailed: "কিবা ভুল হৈছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।", analysisTimeout: "বিশ্লেষণত আশা কৰাতকৈ বেছি সময় লাগিছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।" },
   ta: { requestFailed: "ஏதோ தவறு ஏற்பட்டது. மீண்டும் முயற்சிக்கவும்." },
   te: { requestFailed: "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి." },
   mr: { requestFailed: "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा." },

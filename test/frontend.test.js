@@ -66,3 +66,8 @@ test("frontend includes visit toolkit accessibility fallbacks", async () => {
   assert.match(html, /id="expandAllBtn"/);
   assert.match(html, /id="attentionJump"/);
 });
+
+test("frontend recognizes controlled analysis timeout responses", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /analysis_timeout:"analysisTimeout"/);
+});

@@ -57,3 +57,8 @@ test("localized clinical status labels are present", () => {
     }
   }
 });
+
+test("Assamese has a specific analysis-timeout message", () => {
+  assert.equal(translate("as", "analysisTimeout"), "বিশ্লেষণত আশা কৰাতকৈ বেছি সময় লাগিছে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।");
+  assert.notEqual(translate("as", "analysisTimeout"), translate("as", "requestFailed"));
+});

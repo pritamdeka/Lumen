@@ -1,4 +1,5 @@
 export const MAX_PROVIDER_OUTPUT_TOKENS = 16_384;
+export const PROVIDER_TIMEOUT_MS = 180_000;
 
 export const PROVIDER_DEFINITIONS = Object.freeze([
   Object.freeze({
@@ -84,7 +85,7 @@ export function extractOpenAIText(json, name = "Provider") {
   return text;
 }
 
-export function buildOpenAIRequest(provider, prompt, images) {
+export function buildOpenAIRequest(provider, prompt, images, maxOutputTokens = MAX_PROVIDER_OUTPUT_TOKENS) {
   const content = images.length === 0
     ? prompt
     : [
@@ -98,7 +99,7 @@ export function buildOpenAIRequest(provider, prompt, images) {
     model: provider.model,
     messages: [{ role: "user", content }],
     temperature: 0.2,
-    max_tokens: MAX_PROVIDER_OUTPUT_TOKENS,
+    max_tokens: maxOutputTokens,
     response_format: { type: "json_object" },
     stream: false,
     ...(provider.extraBody || {})
@@ -111,12 +112,16 @@ export function getConfiguredProviders(environment = process.env) {
     .map(provider => ({ ...provider, key: environment[provider.envKey].trim() }));
 }
 
-export async function callProvider(provider, prompt, images, fetchImplementation = globalThis.fetch) {
+export async function callProvider(provider, prompt, images, fetchImplementation = globalThis.fetch, options = {}) {
   if (typeof fetchImplementation !== "function") throw providerError(provider.name, "transport is unavailable");
+  const maxOutputTokens = Number.isInteger(options.maxOutputTokens)
+    ? Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(1, options.maxOutputTokens))
+    : MAX_PROVIDER_OUTPUT_TOKENS;
   if (provider.kind === "gemini") {
     const response = await fetchImplementation(`${provider.endpoint}?key=${encodeURIComponent(provider.key)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
+      signal: options.signal,
       body: JSON.stringify({
         contents: [{
           parts: [
@@ -126,7 +131,7 @@ export async function callProvider(provider, prompt, images, fetchImplementation
         }],
         generationConfig: {
           temperature: 0.2,
-          maxOutputTokens: MAX_PROVIDER_OUTPUT_TOKENS,
+          maxOutputTokens,
           responseMimeType: "application/json"
         }
       })
@@ -142,8 +147,35 @@ export async function callProvider(provider, prompt, images, fetchImplementation
       Accept: "application/json",
       Authorization: `Bearer ${provider.key}`
     },
-    body: JSON.stringify(buildOpenAIRequest(provider, prompt, images))
+    signal: options.signal,
+    body: JSON.stringify(buildOpenAIRequest(provider, prompt, images, maxOutputTokens))
   });
   if (!response.ok) throw providerError(provider.name, `HTTP ${response.status}`);
   return extractOpenAIText(await readProviderJson(response, provider.name), provider.name);
+}
+
+export async function callProviderWithTimeout(provider, prompt, images, options = {}) {
+  const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+    ? options.timeoutMs
+    : PROVIDER_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await callProvider(
+      provider,
+      prompt,
+      images,
+      options.fetchImplementation || globalThis.fetch,
+      { signal: controller.signal, maxOutputTokens: options.maxOutputTokens }
+    );
+  } catch (error) {
+    if (controller.signal.aborted) {
+      const timeoutError = providerError(provider.name, "timed out");
+      timeoutError.code = "provider_timeout";
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }

@@ -98,6 +98,8 @@ After exporting provider keys in your terminal, run `npm run test:providers:live
 
 Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 
+The deployment explicitly enables Vercel Fluid Compute and allows up to 300 seconds for analysis. Provider calls receive a fair share of a 285-second internal deadline, capped at 180 seconds each, so a slow provider can fall back without letting Vercel terminate the function with an unstructured timeout response.
+
 Opening `index.html` directly as a file will not work — `/api/analyze` needs the Vercel runtime.
 
 ---

@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 import {
   buildOpenAIRequest,
   callProvider,
+  callProviderWithTimeout,
   extractGeminiText,
   extractOpenAIText,
   getConfiguredProviders,
   MAX_PROVIDER_OUTPUT_TOKENS,
+  PROVIDER_TIMEOUT_MS,
   PROVIDER_DEFINITIONS
 } from "../api/providers.js";
 
@@ -67,6 +69,13 @@ test("text-only explanation requests use the broadly compatible string content s
   }
 });
 
+test("provider requests accept stage-specific output limits", () => {
+  for (const provider of PROVIDER_DEFINITIONS.filter(item => item.kind === "openai")) {
+    assert.equal(buildOpenAIRequest(provider, "prompt", [], 4_000).max_tokens, 4_000);
+  }
+  assert.equal(PROVIDER_TIMEOUT_MS, 180_000);
+});
+
 test("Gemini parser combines text parts and detects empty, error, and truncated envelopes", () => {
   assert.equal(extractGeminiText({ candidates: [{ content: { parts: [{ text: "{\"a\":" }, { text: "1}" }] } }] }), '{"a":1}');
   assert.throws(() => extractGeminiText({ error: { message: "quota" } }), /quota/);
@@ -116,4 +125,20 @@ test("every provider adapter rejects HTTP, malformed transport, and provider-lev
     await assert.rejects(callProvider(provider, "prompt", [], async () => response(null, { json: async () => { throw new SyntaxError("html"); } })), /invalid JSON/);
     await assert.rejects(callProvider(provider, "prompt", [], async () => response({ error: { message: "upstream unavailable" } })), /upstream unavailable/);
   }
+});
+
+test("provider timeout aborts the upstream request and returns a stable error code", async () => {
+  const provider = { ...PROVIDER_DEFINITIONS[0], key: "secret" };
+  let observedSignal;
+  const fetchImplementation = async (url, options) => {
+    observedSignal = options.signal;
+    return await new Promise((resolve, reject) => {
+      options.signal.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })), { once: true });
+    });
+  };
+  await assert.rejects(
+    callProviderWithTimeout(provider, "prompt", [], { timeoutMs: 10, fetchImplementation }),
+    error => error.code === "provider_timeout" && /Gemini timed out/.test(error.message)
+  );
+  assert.equal(observedSignal.aborted, true);
 });
