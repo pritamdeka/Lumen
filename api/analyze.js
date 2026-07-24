@@ -1,4 +1,4 @@
-import { getLocale, hasExpectedScript, localeFromLegacyPrompt, LOCALES } from "../src/locales.js";
+import { getLocale, hasExpectedScript, isProductionLocale, localeFromLegacyPrompt } from "../src/locales.js";
 import { callProviderWithTimeout, getConfiguredProviders, MAX_PROVIDER_OUTPUT_TOKENS, PROVIDER_TIMEOUT_MS } from "./providers.js";
 
 export const config = { maxDuration: 300 };
@@ -182,7 +182,7 @@ export function normalizeRequest(body) {
     localeCode = localeFromLegacyPrompt(value.language);
   }
   if (localeCode === undefined) localeCode = "en";
-  if (typeof localeCode !== "string" || !LOCALES.some(locale => locale.code === localeCode && locale.enabled)) {
+  if (typeof localeCode !== "string" || !isProductionLocale(localeCode)) {
     const error = new Error("Unsupported locale");
     error.code = "unsupported_locale";
     throw error;

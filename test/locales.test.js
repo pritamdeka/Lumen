@@ -4,18 +4,20 @@ import {
   DEFAULT_LOCALE,
   getEnabledLocales,
   getLocale,
+  getProductionLocales,
   hasExpectedScript,
+  isProductionLocale,
   LOCALES,
   REQUIRED_UI_KEYS,
   translate
 } from "../src/locales.js";
 import { SCRIPT_FIXTURES } from "../test-fixtures/scripts.js";
 
-test("defines 13 enabled and five draft European locales", () => {
+test("defines 18 unique locale catalogs and keeps approvals explicit", () => {
   assert.equal(LOCALES.length, 18);
   assert.equal(new Set(LOCALES.map(locale => locale.code)).size, 18);
-  assert.equal(getEnabledLocales().length, 13);
-  assert.deepEqual(LOCALES.filter(locale => !locale.enabled).map(locale => locale.code), ["es", "fr", "de", "it", "pt-PT"]);
+  assert.ok(getEnabledLocales().length >= 13);
+  assert.ok(LOCALES.filter(locale => locale.reviewed).every(locale => locale.enabled));
 });
 
 test("every locale provides every required UI string", () => {
@@ -45,9 +47,10 @@ test("locale metadata has the expected writing direction and script", () => {
   }
 });
 
-test("review filtering exposes only signed-off translations", () => {
-  assert.deepEqual(getEnabledLocales({ reviewedOnly: true }).map(locale => locale.code), ["en"]);
-  assert.equal(LOCALES.filter(locale => !locale.reviewed).length, 17);
+test("production filtering exposes only current approved catalogs", () => {
+  assert.ok(isProductionLocale("en"));
+  assert.deepEqual(getEnabledLocales({ reviewedOnly: true }).map(locale => locale.code), getProductionLocales().map(locale => locale.code));
+  for (const locale of LOCALES) assert.equal(isProductionLocale(locale.code), locale.enabled && locale.reviewed);
 });
 
 test("localized clinical status labels are present", () => {

@@ -11,6 +11,9 @@
     "dev": "vercel dev",
     "preview:fixture": "node test-fixtures/preview-server.js",
     "test": "node --test",
+    "test:translations": "node --test test/locales.test.js test/translation-review.test.js",
+    "review:translations:check": "node scripts/review-translations.js --check",
+    "review:translations": "node scripts/review-translations.js",
     "test:providers:live": "node scripts/provider-smoke.js",
     "deploy": "vercel --prod"
   }

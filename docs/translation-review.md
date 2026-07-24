@@ -1,33 +1,37 @@
 # Translation Review Checklist
 
-All non-English interface translations remain drafts until a native reviewer signs off. Update `reviewed` only after completing this checklist. The five European drafts also remain disabled until review; set their `enabled` metadata to `true` only at sign-off.
+Production activation is determined by an auditable AI/API review and a matching SHA-256 catalog checksum. These records are not represented as native-human review. Human feedback remains welcome after release.
 
-| Locale | Language | Reviewer | Date | Status |
-|---|---|---|---|---|
-| `en` | English | Project baseline | 2026-07-20 | Reviewed |
-| `hi` | Hindi | — | — | Draft |
-| `bn` | Bengali | — | — | Draft |
-| `as` | Assamese | — | — | Draft |
-| `ta` | Tamil | — | — | Draft |
-| `te` | Telugu | — | — | Draft |
-| `mr` | Marathi | — | — | Draft |
-| `kn` | Kannada | — | — | Draft |
-| `gu` | Gujarati | — | — | Draft |
-| `ml` | Malayalam | — | — | Draft |
-| `pa` | Punjabi (Gurmukhi) | — | — | Draft |
-| `or` | Odia | — | — | Draft |
-| `ur` | Urdu | — | — | Draft |
-| `es` | Spanish | — | — | Draft · disabled |
-| `fr` | French | — | — | Draft · disabled |
-| `de` | German | — | — | Draft · disabled |
-| `it` | Italian | — | — | Draft · disabled |
-| `pt-PT` | European Portuguese | — | — | Draft · disabled |
+Reviewers: `google/gemma-4-26B-A4B-it`, `Qwen/Qwen3.6-35B-A3B`
+Adjudicator: `google/gemma-4-31B-it`
 
-For each locale, verify:
+| Locale | Language | Method | Date | Corrections | Status | Catalog SHA-256 |
+|---|---|---|---|---:|---|---|
+| `en` | English | Project baseline | 2026-07-20 | 0 | Approved | `58b5a613f4c3…` |
+| `hi` | हिन्दी | Awaiting API review | — | 0 | Draft | — |
+| `bn` | বাংলা | Awaiting API review | — | 0 | Draft | — |
+| `as` | অসমীয়া | Awaiting API review | — | 0 | Draft | — |
+| `ta` | தமிழ் | Awaiting API review | — | 0 | Draft | — |
+| `te` | తెలుగు | Awaiting API review | — | 0 | Draft | — |
+| `mr` | मराठी | Awaiting API review | — | 0 | Draft | — |
+| `kn` | ಕನ್ನಡ | Awaiting API review | — | 0 | Draft | — |
+| `gu` | ગુજરાતી | Awaiting API review | — | 0 | Draft | — |
+| `ml` | മലയാളം | Awaiting API review | — | 0 | Draft | — |
+| `pa` | ਪੰਜਾਬੀ | Awaiting API review | — | 0 | Draft | — |
+| `or` | ଓଡ଼ିଆ | Awaiting API review | — | 0 | Draft | — |
+| `ur` | اردو | Awaiting API review | — | 0 | Draft | — |
+| `es` | Español | Awaiting API review | — | 0 | Draft | — |
+| `fr` | Français | Awaiting API review | — | 0 | Draft | — |
+| `de` | Deutsch | Awaiting API review | — | 0 | Draft | — |
+| `it` | Italiano | Awaiting API review | — | 0 | Draft | — |
+| `pt-PT` | Português | Awaiting API review | — | 0 | Draft | — |
 
-- Wording is natural, calm, and medically neutral; it does not imply diagnosis or treatment.
-- Every control, validation message, status label, history state, and disclaimer is translated.
-- Long text wraps at 320 px width and remains readable in light and dark themes.
-- Print output is legible; Urdu direction and mixed-direction numbers/units are correct.
-- Keyboard focus order, accessible names, and screen-reader reading order remain logical.
-- Azure narration clearly pronounces test names, decimals, ranges, and units; the mapped voice matches the locale.
+Automated release checks cover:
+
+- Complete interface-key coverage with no changed placeholders.
+- Natural, calm, medically neutral wording without diagnosis or treatment claims.
+- Status labels, validation messages, controls, consent, privacy, and safety disclaimers.
+- Expected writing system, Urdu direction, numbers, units, file types, and medical abbreviations.
+- Accessibility-label intent and concise mobile-friendly wording.
+
+Run `npm run review:translations` after configuring `DEEPINFRA_API_KEY`. A catalog edit changes its checksum and immediately removes that locale from production until the review is run again.

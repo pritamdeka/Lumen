@@ -25,7 +25,23 @@ test("frontend contains direction and upload accessibility hooks", async () => {
   assert.match(html, /document\.documentElement\.dir=L\.dir/);
   assert.match(html, /id="uploadMeta" aria-live="polite"/);
   assert.match(html, /setAttribute\("aria-label"/);
-  assert.match(html, /LOCALES\.filter\(locale=>locale\.enabled\)/);
+  assert.match(html, /const LANGS=getProductionLocales\(\)/);
+});
+
+test("frontend requires processing consent and links every beta trust page", async () => {
+  const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /id="processingDialog"/);
+  assert.match(html, /if\(!await ensureProcessingConsent\(\)\)/);
+  assert.match(html, /async function analyse\(\)[\s\S]*?ensureProcessingConsent\(\)[\s\S]*?prepareImages\(\)/);
+  assert.match(html, /localStorage\.removeItem\("lumen_processing_consent"\)/);
+  for (const page of ["privacy.html", "terms.html", "medical-disclaimer.html", "contact.html"]) {
+    assert.match(html, new RegExp(page.replace(".", "\\.")));
+    const content = await readFile(new URL(`../${page}`, import.meta.url), "utf8");
+    assert.match(content, /KhyontekAI|Lumen/);
+    assert.match(content, /noindex,nofollow,noarchive/);
+  }
+  const privacy = await readFile(new URL("../privacy.html", import.meta.url), "utf8");
+  assert.match(privacy, /contact@khyontekai\.com/);
 });
 
 test("frontend explains extracted values without a blocking confidence review", async () => {

@@ -1,3 +1,6 @@
+import { TRANSLATION_OVERRIDES } from "./translation-overrides.js";
+import { getReviewRecord, isReviewCurrent } from "./translation-review.js";
+
 export const REQUIRED_UI_KEYS = [
   "eyebrow", "heroTitle", "heroEmphasis", "heroBody", "neverStored",
   "languages", "notDiagnosis", "language", "explain", "drop", "uploadHint",
@@ -14,7 +17,10 @@ export const REQUIRED_UI_KEYS = [
   "doctorSummary", "followUpReminder", "reminderDate", "addToCalendar", "selectDate",
   "rangePosition", "trendTable", "visitToolkit", "requestFailed", "uninterpreted",
   "expandAll", "collapseAll", "needsAttention", "audioConsent", "audioDisclosure",
-  "audioLoading", "playAudio", "pauseAudio", "restartAudio", "tooManyFindings"
+  "audioLoading", "playAudio", "pauseAudio", "restartAudio", "tooManyFindings",
+  "analysisTimeout", "processingConsentTitle", "processingConsentBody",
+  "processingConsentAccept", "processingConsentDecline", "processingConsentManage",
+  "processingConsentDeclined", "beta"
 ];
 
 const en = {
@@ -142,6 +148,18 @@ const europeanTranslations = {
   "pt-PT": { heroTitle:"O seu relatório médico,",heroEmphasis:"finalmente em palavras simples.",heroBody:"Carregue um relatório ou receita. O Lumen explica cada valor e prepara perguntas.",language:"Idioma",languages:"idiomas",explain:"Explicar o relatório",drop:"Largue o relatório aqui",findings:"Os seus resultados",meaning:"O que significa",questions:"Perguntas ao médico",changeLanguage:"Mudar idioma",newReport:"Novo relatório",normal:"Dentro do intervalo",low:"Baixo",high:"Alto",borderline:"Limite",critical:"Crítico",overview:"Visão geral",nextSteps:"Próximos passos",chooseLanguage:"Escolher idioma",close:"Fechar",all:"Todos",outsideRange:"Fora do intervalo",uncertain:"Incerto",confirmed:"Confirmado",attention:"Requer atenção",readAloud:"Ouvir",stopReading:"Parar",reference:"Referência",report:"Relatório" }
 };
 
+const releaseTranslations = {
+  en: {
+    processingConsentTitle: "Before Lumen analyses your report",
+    processingConsentBody: "Your selected report pages and extracted text are sent securely to a configured AI provider to create the explanation. Lumen does not keep the report on its servers. You can withdraw this permission at any time.",
+    processingConsentAccept: "Allow analysis",
+    processingConsentDecline: "Not now",
+    processingConsentManage: "Manage analysis consent",
+    processingConsentDeclined: "Analysis was not started because permission was not granted.",
+    beta: "Public beta"
+  }
+};
+
 const metadata = [
   ["en", "English", "simple English", "ltr", "Latin", true],
   ["hi", "हिन्दी", "Hindi in Devanagari script", "ltr", "Devanagari", false],
@@ -163,10 +181,34 @@ const metadata = [
   ,["pt-PT", "Português", "European Portuguese in Latin script", "ltr", "Latin", false, false]
 ];
 
-export const LOCALES = metadata.map(([code, label, prompt, dir, script, reviewed, enabled = true]) => ({
-  code, label, prompt, dir, script, reviewed, enabled,
-  ui: { ...en, ...reviewTranslations.en, ...featureTranslations.en, ...errorTranslations.en, ...(code === "en" ? en : translations[code]), ...europeanTranslations[code], ...reviewTranslations[code], ...featureTranslations[code], ...errorTranslations[code], ...(experienceTranslations[code] || experienceTranslations.en) }
-}));
+export const LOCALES = metadata.map(([code, label, prompt, dir, script, _legacyReviewed, baseEnabled = true]) => {
+  const ui = {
+    ...en,
+    ...reviewTranslations.en,
+    ...featureTranslations.en,
+    ...errorTranslations.en,
+    ...(code === "en" ? en : translations[code]),
+    ...europeanTranslations[code],
+    ...reviewTranslations[code],
+    ...featureTranslations[code],
+    ...errorTranslations[code],
+    ...(experienceTranslations[code] || experienceTranslations.en),
+    ...(releaseTranslations[code] || releaseTranslations.en),
+    ...TRANSLATION_OVERRIDES[code]
+  };
+  const storedReview = getReviewRecord(code);
+  const reviewed = isReviewCurrent(code, ui, REQUIRED_UI_KEYS);
+  const review = {
+    ...storedReview,
+    status: storedReview.status === "approved" && !reviewed ? "stale" : storedReview.status
+  };
+  return {
+    code, label, prompt, dir, script, reviewed,
+    enabled: baseEnabled || reviewed,
+    review,
+    ui
+  };
+});
 
 export const DEFAULT_LOCALE = "en";
 
@@ -176,6 +218,15 @@ export function getLocale(code) {
 
 export function getEnabledLocales({ reviewedOnly = false } = {}) {
   return LOCALES.filter(locale => locale.enabled && (!reviewedOnly || locale.reviewed));
+}
+
+export function isProductionLocale(value) {
+  const code = typeof value === "string" ? value : value?.code;
+  return LOCALES.some(locale => locale.code === code && locale.enabled && locale.reviewed);
+}
+
+export function getProductionLocales() {
+  return LOCALES.filter(locale => isProductionLocale(locale));
 }
 
 export function translate(code, key) {

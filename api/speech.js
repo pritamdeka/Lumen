@@ -1,5 +1,5 @@
 import { AZURE_VOICES, MAX_SPEECH_CHARS } from "../src/speech.js";
-import { LOCALES } from "../src/locales.js";
+import { getLocale, isProductionLocale } from "../src/locales.js";
 
 export const config = { maxDuration: 30 };
 const HITS = new Map();
@@ -21,12 +21,12 @@ function escapeXml(value) {
 
 export function normalizeSpeechRequest(body) {
   const value = body && typeof body === "object" ? body : {};
-  const voice = LOCALES.some(locale => locale.code === value.locale && locale.enabled) ? AZURE_VOICES[value.locale] : null;
+  const voice = isProductionLocale(value.locale) ? AZURE_VOICES[value.locale] : null;
   if (!voice) { const error = new Error("Unsupported locale"); error.code = "unsupported_locale"; throw error; }
   if (typeof value.text !== "string" || !value.text.trim()) { const error = new Error("Missing narration text"); error.code = "missing_text"; throw error; }
   const text = value.text.trim();
   if (text.length > MAX_SPEECH_CHARS) { const error = new Error("Narration segment is too long"); error.code = "payload_too_large"; throw error; }
-  return { locale: value.locale, text, ...voice };
+  return { locale: getLocale(value.locale).code, text, ...voice };
 }
 
 export function buildSsml(input) {

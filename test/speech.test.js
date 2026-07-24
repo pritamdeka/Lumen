@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import speechHandler, { buildSsml, normalizeSpeechRequest } from "../api/speech.js";
+import { getProductionLocales, LOCALES } from "../src/locales.js";
 import { AZURE_VOICES, bestDeviceVoice, buildNarrationSections, splitNarrationSections } from "../src/speech.js";
 
 function mockResponse() {
@@ -33,13 +34,15 @@ test("device voice selection prefers exact locale then language family", () => {
 });
 
 test("speech request validation and SSML escaping are bounded", () => {
-  const input = normalizeSpeechRequest({ locale: "ur", text: "A < B & C" });
-  assert.equal(input.lang, "ur-IN");
+  const productionLocale = getProductionLocales()[0];
+  const input = normalizeSpeechRequest({ locale: productionLocale.code, text: "A < B & C" });
+  assert.equal(input.locale, productionLocale.code);
   assert.match(buildSsml(input), /A &lt; B &amp; C/);
   assert.throws(() => normalizeSpeechRequest({ locale: "xx", text: "hello" }), /Unsupported locale/);
-  assert.throws(() => normalizeSpeechRequest({ locale: "es", text: "hola" }), /Unsupported locale/);
-  assert.throws(() => normalizeSpeechRequest({ locale: "en", text: "" }), /Missing narration text/);
-  assert.throws(() => normalizeSpeechRequest({ locale: "en", text: "x".repeat(3001) }), /too long/);
+  const draft = LOCALES.find(locale => !locale.reviewed);
+  if (draft) assert.throws(() => normalizeSpeechRequest({ locale: draft.code, text: "hello" }), /Unsupported locale/);
+  assert.throws(() => normalizeSpeechRequest({ locale: productionLocale.code, text: "" }), /Missing narration text/);
+  assert.throws(() => normalizeSpeechRequest({ locale: productionLocale.code, text: "x".repeat(3001) }), /too long/);
 });
 
 test("speech API streams provider audio without caching", async () => {
@@ -52,7 +55,7 @@ test("speech API streams provider audio without caching", async () => {
   global.fetch = async (url, options) => { request = { url: String(url), options }; return { ok: true, arrayBuffer: async () => Uint8Array.from([1,2,3]).buffer }; };
   try {
     const response = mockResponse();
-    await speechHandler({ method: "POST", headers: { "x-forwarded-for": "speech-success" }, body: { locale: "as", text: "স্বাস্থ্য" } }, response);
+    await speechHandler({ method: "POST", headers: { "x-forwarded-for": "speech-success" }, body: { locale: getProductionLocales()[0].code, text: "Health explanation" } }, response);
     assert.equal(response.statusCode, 200);
     assert.equal(response.headers["Content-Type"], "audio/mpeg");
     assert.equal(response.headers["Cache-Control"], "no-store");

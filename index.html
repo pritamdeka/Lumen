@@ -6,6 +6,7 @@
 <title>Lumen — Your medical report, explained</title>
 <meta name="description" content="Upload a lab report and get a plain-language explanation in your language. Not a diagnosis — a translation.">
 <meta name="theme-color" content="#0E7C66">
+<meta name="robots" content="noindex,nofollow,noarchive">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Gujarati:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Gurmukhi:wght@400;500;600&family=Noto+Sans+Oriya:wght@400;500;600&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
@@ -68,7 +69,14 @@
 
   /* language picker */
   #languageDialog{width:min(560px,calc(100% - 28px));max-height:min(680px,85vh);margin:auto;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow-lg);padding:0}
-  #languageDialog::backdrop{background:rgba(12,25,22,.55);backdrop-filter:blur(3px)}
+  #languageDialog::backdrop,#processingDialog::backdrop{background:rgba(12,25,22,.55);backdrop-filter:blur(3px)}
+  #processingDialog{width:min(520px,calc(100% - 28px));margin:auto;border:1px solid var(--line);border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow-lg);padding:24px}
+  #processingDialog h2{font-family:var(--font-d);font-size:1.35rem;line-height:1.3}
+  #processingDialog p{margin-top:12px;color:var(--ink-soft);font-size:.92rem}
+  .consent-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:22px}
+  .consent-actions button{padding:10px 16px;border-radius:10px;font:inherit;font-weight:650;cursor:pointer}
+  .consent-accept{border:0;background:var(--teal);color:#fff}
+  .consent-decline{border:1px solid var(--line);background:var(--surface);color:var(--ink)}
   .dialog-head{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 12px;gap:16px}
   .dialog-head h2{font-family:var(--font-d);font-size:1.35rem}
   .language-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:8px 20px 22px;overflow:auto}
@@ -201,6 +209,9 @@
 
   .disclaimer{margin:34px auto 60px;text-align:center;font-size:.78rem;color:var(--ink-soft);line-height:1.7;max-width:580px}
   .disclaimer b{color:var(--ink)}
+  .site-footer{display:flex;justify-content:center;align-items:center;gap:10px 16px;flex-wrap:wrap;margin:-42px auto 38px;font-size:.75rem;color:var(--ink-soft)}
+  .site-footer a,.site-footer button{color:inherit;background:none;border:0;text-decoration:underline;font:inherit;cursor:pointer;padding:2px}
+  .beta-label{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:2px 8px;text-decoration:none!important}
 
   @media print{
     nav,.hero,.langbar,.uploader,#status,.actions,#history,.iconbtn,.report-tabs,.filterbar,.audio-controls,.audio-progress,.reminder-row,.attention-jump{display:none!important}
@@ -226,6 +237,16 @@
   <dialog id="languageDialog" aria-labelledby="languageDialogTitle">
     <div class="dialog-head"><h2 id="languageDialogTitle">Choose language</h2><button class="iconbtn" id="closeLanguage" type="button" aria-label="Close"><span data-icon="close"></span></button></div>
     <div class="language-grid" id="languageOptions" role="radiogroup"></div>
+  </dialog>
+
+  <dialog id="processingDialog" aria-labelledby="processingConsentTitle">
+    <h2 id="processingConsentTitle">Before Lumen analyses your report</h2>
+    <p id="processingConsentBody">Your selected report pages and extracted text are sent securely to a configured AI provider to create the explanation. Lumen does not keep the report on its servers. You can withdraw this permission at any time.</p>
+    <p><a href="/privacy.html">Read the privacy notice</a></p>
+    <div class="consent-actions">
+      <button class="consent-decline" id="processingConsentDecline" type="button">Not now</button>
+      <button class="consent-accept" id="processingConsentAccept" type="button">Allow analysis</button>
+    </div>
   </dialog>
 
   <section class="hero">
@@ -327,11 +348,19 @@
   <p class="disclaimer">
     <b id="disclaimerTitle">Lumen is not a doctor.</b> <span id="disclaimerBody">It explains medical documents to support conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician. Images are sent to the selected AI provider for analysis and are not stored on our servers.</span>
   </p>
+  <footer class="site-footer">
+    <span class="beta-label" id="betaLabel">Public beta</span>
+    <a href="/privacy.html">Privacy</a>
+    <a href="/terms.html">Terms</a>
+    <a href="/medical-disclaimer.html">Medical disclaimer</a>
+    <a href="/contact.html">Contact</a>
+    <button id="manageProcessingConsent" type="button">Manage analysis consent</button>
+  </footer>
 </div>
 
 <script type="module">
 "use strict";
-import { DEFAULT_LOCALE, LOCALES, getLocale, translate } from "./src/locales.js";
+import { DEFAULT_LOCALE, getLocale, getProductionLocales, translate } from "./src/locales.js";
 import { buildTrendSeries, createReminderIcs, filterFindings, rangePosition, statusGroup, summarizeFindings } from "./src/report-tools.js";
 import { bestDeviceVoice, buildNarrationSections, splitNarrationSections } from "./src/speech.js";
 import { postAnalysis } from "./src/http.js";
@@ -351,7 +380,7 @@ function applyIcons(root=document){root.querySelectorAll("[data-icon]").forEach(
 applyIcons();
 
 /* ---------------- languages ---------------- */
-const LANGS=LOCALES.filter(locale=>locale.enabled);
+const LANGS=getProductionLocales();
 const storedLang=getLocale(localStorage.getItem("lumen_lang")||DEFAULT_LOCALE).code;
 let currentLang=LANGS.some(locale=>locale.code===storedLang)?storedLang:DEFAULT_LOCALE;
 function t(key){return translate(currentLang,key);}
@@ -422,6 +451,7 @@ function applyUIStrings(){
   $("summaryTitle").textContent=t("summary");$("trendsTitle").textContent=t("trends");$("glossaryTitle").textContent=t("glossary");$("toolkitTitle").textContent=t("visitToolkit");
   $("readTitle").textContent=t("readAloud");$("readLbl").textContent=t("playAudio");$("doctorSummaryTitle").textContent=t("doctorSummary");$("reminderTitle").textContent=t("followUpReminder");$("reminderDateLbl").textContent=t("reminderDate");$("calendarLbl").textContent=t("addToCalendar");
   $("expandAllBtn").textContent=t("expandAll");$("collapseAllBtn").textContent=t("collapseAll");$("attentionJump").textContent=t("needsAttention");$("restartAudioBtn").textContent=t("restartAudio");$("audioDisclosure").textContent=t("audioDisclosure");
+  $("processingConsentTitle").textContent=t("processingConsentTitle");$("processingConsentBody").textContent=t("processingConsentBody");$("processingConsentAccept").textContent=t("processingConsentAccept");$("processingConsentDecline").textContent=t("processingConsentDecline");$("manageProcessingConsent").textContent=t("processingConsentManage");$("betaLabel").textContent=t("beta");
   renderFindingFilters();
   renderThumbs();
 }
@@ -537,6 +567,26 @@ function setStatus(msg,err,busy){
 let lastReport=null;
 let lastExtraction=null;
 let currentAnalysisId=null;
+let consentResolver=null;
+
+function openProcessingConsent(){
+  if(!$("processingDialog").open)$("processingDialog").showModal();
+  $("processingConsentAccept").focus();
+  return new Promise(resolve=>{consentResolver=resolve;});
+}
+function closeProcessingConsent(accepted){
+  try{if(accepted)localStorage.setItem("lumen_processing_consent","accepted");else localStorage.removeItem("lumen_processing_consent");}catch(e){}
+  if($("processingDialog").open)$("processingDialog").close();
+  if(consentResolver){const resolve=consentResolver;consentResolver=null;resolve(accepted);}
+}
+async function ensureProcessingConsent(){
+  try{if(localStorage.getItem("lumen_processing_consent")==="accepted")return true;}catch(e){}
+  return openProcessingConsent();
+}
+$("processingConsentAccept").onclick=()=>closeProcessingConsent(true);
+$("processingConsentDecline").onclick=()=>closeProcessingConsent(false);
+$("processingDialog").addEventListener("cancel",event=>{event.preventDefault();closeProcessingConsent(false);});
+$("manageProcessingConsent").onclick=()=>openProcessingConsent();
 
 const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",too_many_findings:"tooManyFindings",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",analysis_timeout:"analysisTimeout",no_provider:"requestFailed",rate_limited:"requestFailed"};
 async function apiRequest(payload){
@@ -545,6 +595,7 @@ async function apiRequest(payload){
 }
 async function analyse(){
   if(!pages.length) return;
+  if(!await ensureProcessingConsent()){setStatus(t("processingConsentDeclined"),true);return;}
   go.disabled=true;
   $("results").style.display="none";
   setStatus(t("reading"),false,true);
