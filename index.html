@@ -400,8 +400,8 @@ function renderLangChips(){
   LANGS.forEach(L=>{const b=document.createElement("button");b.type="button";b.className="chip"+(L.code===currentLang?" active":"");b.textContent=L.label;b.lang=L.code;b.dir=L.dir;b.setAttribute("aria-pressed",String(L.code===currentLang));b.onclick=()=>chooseLanguage(L.code);box.appendChild(b);});
 }
 async function chooseLanguage(code,closeDialog=false){
-  const previous=currentLang,changed=code!==currentLang,scrollTop=window.scrollY;if(changed)stopAudio(true);setLang(code);if(closeDialog&&$("languageDialog").open)$("languageDialog").close();
-  if(changed&&lastExtraction&&$("results").style.display==="block"){const translated=await requestExplanation(lastExtraction,"translating",true);if(!translated)setLang(previous);window.scrollTo({top:scrollTop});}
+  const previous=currentLang,changed=code!==currentLang,scrollTop=window.scrollY,activeTab=document.querySelector('.report-tab[aria-selected="true"]')?.id.replace("tab","")||"Overview";if(changed)stopAudio(true);setLang(code);if(closeDialog&&$("languageDialog").open)$("languageDialog").close();
+  if(changed&&lastExtraction&&$("results").style.display==="block"){const translated=await requestExplanation(lastExtraction,"translating",true);if(!translated)setLang(previous);activateTab(activeTab);window.scrollTo({top:scrollTop});}
 }
 function setLang(code){
   currentLang=getLocale(code).code;

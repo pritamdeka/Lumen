@@ -60,6 +60,8 @@ test("frontend uses one accessible language picker and report dashboard", async 
   assert.match(html, /id="languageOptions" role="radiogroup"/);
   assert.match(html, /id="langChips"/);
   assert.match(html, /function renderLangChips\(\)/);
+  assert.match(html, /activeTab=document\.querySelector\('\.report-tab\[aria-selected="true"\]'\)/);
+  assert.match(html, /activateTab\(activeTab\);window\.scrollTo\(\{top:scrollTop\}\)/);
   assert.match(html, /\[\["all","all"\],\["outside","outsideRange"\],\["uncertain","uncertain"\],\["confirmed","confirmed"\]\]/);
   assert.match(html, /showModal\(\)/);
   assert.match(html, /role="tablist"/);

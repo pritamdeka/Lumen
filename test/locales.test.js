@@ -11,13 +11,45 @@ import {
   REQUIRED_UI_KEYS,
   translate
 } from "../src/locales.js";
+import { catalogHash } from "../src/translation-review.js";
 import { SCRIPT_FIXTURES } from "../test-fixtures/scripts.js";
+
+const EXPECTED_PRODUCTION_LOCALES = [
+  "en", "hi", "bn", "as", "ta", "te", "mr", "kn", "gu",
+  "ml", "pa", "or", "ur", "es", "fr", "de", "it", "pt-PT"
+];
 
 test("defines 18 unique locale catalogs and keeps approvals explicit", () => {
   assert.equal(LOCALES.length, 18);
   assert.equal(new Set(LOCALES.map(locale => locale.code)).size, 18);
   assert.ok(getEnabledLocales().length >= 13);
   assert.ok(LOCALES.filter(locale => locale.reviewed).every(locale => locale.enabled));
+});
+
+test("the immediate beta exposes all 18 approved locale catalogs", () => {
+  assert.deepEqual(getProductionLocales().map(locale => locale.code), EXPECTED_PRODUCTION_LOCALES);
+  assert.equal(getProductionLocales().length, 18);
+  for (const locale of LOCALES) {
+    assert.equal(locale.enabled, true, `${locale.code} is enabled`);
+    assert.equal(locale.reviewed, true, `${locale.code} has a current review`);
+    assert.equal(locale.review.status, "approved", `${locale.code} is approved`);
+    assert.equal(
+      locale.review.catalogHash,
+      catalogHash(locale.ui, REQUIRED_UI_KEYS),
+      `${locale.code} review checksum matches its active catalog`
+    );
+    assert.equal(Number.isNaN(Date.parse(locale.review.reviewedAt)), false, `${locale.code} has a valid review timestamp`);
+    if (locale.code === "en") {
+      assert.equal(locale.review.method, "project-baseline");
+    } else {
+      assert.equal(locale.review.method, "deepinfra-dual-model");
+      assert.deepEqual(locale.review.reviewers, [
+        "google/gemma-4-26B-A4B-it",
+        "Qwen/Qwen3.6-35B-A3B"
+      ]);
+      assert.equal(locale.review.adjudicator, "google/gemma-4-31B-it");
+    }
+  }
 });
 
 test("every locale provides every required UI string", () => {

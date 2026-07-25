@@ -54,7 +54,7 @@ export function parseReviewObject(text) {
   throw new Error("Invalid translation review JSON");
 }
 
-export function normalizeReviewItems(payload, expectedKeys) {
+export function normalizeReviewItems(payload, expectedKeys, { unresolvedMissingCorrection = false } = {}) {
   if (!payload || !Array.isArray(payload.items)) throw new Error("Translation review must contain items");
   if (payload.items.length !== expectedKeys.length) throw new Error("Translation review item count mismatch");
   const items = new Map();
@@ -63,18 +63,36 @@ export function normalizeReviewItems(payload, expectedKeys) {
       throw new Error("Invalid translation review item");
     }
     const correction = typeof item.correction === "string" ? item.correction.trim() : "";
-    if (item.verdict === "fix" && !correction) throw new Error("Translation correction is missing");
+    if (item.verdict === "fix" && !correction && !unresolvedMissingCorrection) {
+      throw new Error("Translation correction is missing");
+    }
     items.set(item.key, {
       key: item.key,
-      verdict: item.verdict,
+      verdict: item.verdict === "fix" && !correction ? "block" : item.verdict,
       correction,
-      issues: Array.isArray(item.issues) ? item.issues.filter(value => typeof value === "string").slice(0, 8) : []
+      issues: [
+        ...(Array.isArray(item.issues) ? item.issues.filter(value => typeof value === "string").slice(0, 8) : []),
+        ...(item.verdict === "fix" && !correction ? ["Reviewer proposed a fix without a replacement"] : [])
+      ].slice(0, 8)
     });
   }
   return items;
 }
 
 export function buildReviewerPrompt(locale, entries) {
+  if (entries.length === 1) {
+    return `Review one Lumen interface translation into ${locale.prompt} (${locale.script}, ${locale.dir}).
+Require exact meaning, natural wording, medical neutrality, preserved placeholders, and unchanged safety strength. Return pass, fix with a complete replacement, or block.
+Interface strings:
+${JSON.stringify([{ key: "item", english: entries[0].source, current: entries[0].translation }])}`;
+  }
+  if (entries.length <= 3) {
+    return `Review these English-to-${locale.prompt} Lumen interface translations in ${locale.script} script (${locale.dir}).
+Require natural grammar, exact meaning, medical neutrality, preserved placeholders, accessible labels, and unchanged safety/disclaimer strength. Do not diagnose or add advice.
+Return one JSON item per supplied key using verdict "pass", "fix", or "block". A "fix" requires the complete replacement in "correction"; otherwise use "block". Keep "issues" brief.
+Interface strings:
+${JSON.stringify(entries)}`;
+  }
   return `You are independently reviewing interface translations for Lumen, an informational medical-document explanation app.
 Review from ${entries[0]?.source ? "English" : "the source language"} into ${locale.prompt}. Use the ${locale.script} writing system and ${locale.dir} direction.
 Check natural grammar, preserved meaning, calm medical neutrality, accessibility labels, disclaimers, status terminology, punctuation, placeholders, and absence of unintended English. Product names, file types, medical abbreviations, numbers, and units may remain Latin.
@@ -87,13 +105,22 @@ ${JSON.stringify(entries)}`;
 }
 
 export function buildAdjudicatorPrompt(locale, entries) {
+  const promptEntries = entries.length === 1
+    ? entries.map(entry => ({
+        key: "item",
+        english: entry.source,
+        current: entry.translation,
+        reviewerA: { verdict: entry.reviewerA.verdict, candidate: entry.reviewerA.correction },
+        reviewerB: { verdict: entry.reviewerB.verdict, candidate: entry.reviewerB.correction }
+      }))
+    : entries;
   return `You are the final translation adjudicator for Lumen, an informational medical-document explanation app.
 Choose or produce the safest, most natural ${locale.prompt} translation for every supplied item. Preserve the English meaning, placeholders, medical neutrality, accessibility intent, and all disclaimers. Do not diagnose or add treatment advice.
 Return exactly one JSON object:
 {"items":[{"key":"exact key","verdict":"pass|fix|block","correction":"final complete translation or empty string","issues":["short reason"]}]}
 Use "pass" only when the current translation should remain unchanged. Use "fix" with the final replacement. Use "block" only if none can be made safe.
 Disputed items:
-${JSON.stringify(entries)}`;
+${JSON.stringify(promptEntries)}`;
 }
 
 function adjudicationEntries(entries, first, second) {
@@ -105,60 +132,124 @@ function adjudicationEntries(entries, first, second) {
     }));
 }
 
+export async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  let failure;
+  async function run() {
+    while (!failure && nextIndex < items.length) {
+      const index = nextIndex++;
+      try {
+        results[index] = await worker(items[index], index);
+      } catch (error) {
+        failure ||= error;
+      }
+    }
+  }
+  const workers = Array.from({ length: Math.min(Math.max(1, limit), items.length) }, () => run());
+  await Promise.all(workers);
+  if (failure) throw failure;
+  return results;
+}
+
 export async function reviewLocaleCatalog({
   locale,
   source,
   target,
   requiredKeys,
   request,
-  chunkSize = 18,
-  maxRepairRounds = 2
+  chunkSize = 6,
+  adjudicationChunkSize = 3,
+  concurrency = 3,
+  maxRepairRounds = 0
 }) {
   const initialErrors = validateCatalog(source, target, requiredKeys);
   if (initialErrors.length) return { status: "failed", reason: initialErrors.join("; "), catalog: target, corrections: 0 };
 
   const catalog = { ...target };
   let corrections = 0;
+  async function requestReviewer(model, entries) {
+    try {
+      const payload = await request(model, buildReviewerPrompt(locale, entries));
+      const normalizedPayload = entries.length === 1 && payload?.items?.length === 1
+        ? { ...payload, items: [{ ...payload.items[0], key: entries[0].key }] }
+        : payload;
+      normalizeReviewItems(normalizedPayload, entries.map(entry => entry.key), { unresolvedMissingCorrection: true });
+      return normalizedPayload;
+    } catch (error) {
+      if (entries.length <= 1) throw error;
+      const middle = Math.ceil(entries.length / 2);
+      const left = await requestReviewer(model, entries.slice(0, middle));
+      const right = await requestReviewer(model, entries.slice(middle));
+      return { items: [...left.items, ...right.items] };
+    }
+  }
+  async function requestAdjudicator(entries) {
+    try {
+      const payload = await request(
+        TRANSLATION_REVIEW_MODELS.adjudicator,
+        buildAdjudicatorPrompt(locale, entries)
+      );
+      const normalizedPayload = entries.length === 1 && payload?.items?.length === 1
+        ? { ...payload, items: [{ ...payload.items[0], key: entries[0].key }] }
+        : payload;
+      normalizeReviewItems(normalizedPayload, entries.map(entry => entry.key));
+      return normalizedPayload;
+    } catch (error) {
+      if (entries.length <= 1) throw error;
+      const middle = Math.ceil(entries.length / 2);
+      const left = await requestAdjudicator(entries.slice(0, middle));
+      const right = await requestAdjudicator(entries.slice(middle));
+      return { items: [...left.items, ...right.items] };
+    }
+  }
   for (let round = 0; round <= maxRepairRounds; round++) {
     let roundCorrections = 0;
-    for (const entries of chunkEntries(source, catalog, requiredKeys, chunkSize)) {
-      const prompt = buildReviewerPrompt(locale, entries);
+    const chunks = chunkEntries(source, catalog, requiredKeys, chunkSize);
+    const chunkResults = await mapWithConcurrency(chunks, concurrency, async entries => {
       const [firstPayload, secondPayload] = await Promise.all(
-        TRANSLATION_REVIEW_MODELS.reviewers.map(model => request(model, prompt))
+        TRANSLATION_REVIEW_MODELS.reviewers.map(model => requestReviewer(model, entries))
       );
       const expectedKeys = entries.map(entry => entry.key);
-      const first = normalizeReviewItems(firstPayload, expectedKeys);
-      const second = normalizeReviewItems(secondPayload, expectedKeys);
+      const first = normalizeReviewItems(firstPayload, expectedKeys, { unresolvedMissingCorrection: true });
+      const second = normalizeReviewItems(secondPayload, expectedKeys, { unresolvedMissingCorrection: true });
       const disputed = adjudicationEntries(entries, first, second);
-      if (!disputed.length) continue;
+      if (!disputed.length) return { updates: [] };
 
-      const adjudicatedPayload = await request(
-        TRANSLATION_REVIEW_MODELS.adjudicator,
-        buildAdjudicatorPrompt(locale, disputed)
-      );
-      const adjudicated = normalizeReviewItems(adjudicatedPayload, disputed.map(item => item.key));
-      for (const entry of disputed) {
-        const verdict = adjudicated.get(entry.key);
-        if (verdict.verdict === "block") {
-          return { status: "failed", reason: `${entry.key}: adjudicator blocked release`, catalog, corrections };
+      const updates = [];
+      for (let disputedIndex = 0; disputedIndex < disputed.length; disputedIndex += adjudicationChunkSize) {
+        const disputedEntries = disputed.slice(disputedIndex, disputedIndex + adjudicationChunkSize);
+        const adjudicatedPayload = await requestAdjudicator(disputedEntries);
+        const adjudicated = normalizeReviewItems(adjudicatedPayload, disputedEntries.map(item => item.key));
+        for (const entry of disputedEntries) {
+          const verdict = adjudicated.get(entry.key);
+          if (verdict.verdict === "block") {
+            return { reason: `${entry.key}: adjudicator blocked release` };
+          }
+          if (verdict.verdict !== "fix") continue;
+          if (JSON.stringify(placeholders(source[entry.key])) !== JSON.stringify(placeholders(verdict.correction))) {
+            return { reason: `${entry.key}: adjudicated correction changed placeholders` };
+          }
+          if (catalog[entry.key] !== verdict.correction) {
+            updates.push([entry.key, verdict.correction]);
+          }
         }
-        if (verdict.verdict !== "fix") continue;
-        if (round === maxRepairRounds) {
-          return { status: "failed", reason: `${entry.key}: correction did not pass after ${maxRepairRounds} repair rounds`, catalog, corrections };
-        }
-        if (JSON.stringify(placeholders(source[entry.key])) !== JSON.stringify(placeholders(verdict.correction))) {
-          return { status: "failed", reason: `${entry.key}: adjudicated correction changed placeholders`, catalog, corrections };
-        }
-        if (catalog[entry.key] !== verdict.correction) {
-          catalog[entry.key] = verdict.correction;
-          corrections++;
-          roundCorrections++;
-        }
+      }
+      return { updates };
+    });
+    const failed = chunkResults.find(result => result.reason);
+    if (failed) return { status: "failed", reason: failed.reason, catalog, corrections };
+    for (const result of chunkResults) {
+      for (const [key, correction] of result.updates) {
+        if (catalog[key] === correction) continue;
+        catalog[key] = correction;
+        corrections++;
+        roundCorrections++;
       }
     }
     const errors = validateCatalog(source, catalog, requiredKeys);
     if (errors.length) return { status: "failed", reason: errors.join("; "), catalog, corrections };
-    if (roundCorrections === 0) return { status: "approved", catalog, corrections };
+    if (roundCorrections === 0 || round === maxRepairRounds) return { status: "approved", catalog, corrections };
   }
   return { status: "failed", reason: "Translation review did not converge", catalog, corrections };
 }

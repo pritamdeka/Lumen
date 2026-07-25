@@ -76,6 +76,23 @@ test("normalizes new and legacy request shapes", () => {
   if (draft) assert.throws(() => normalizeRequest({ locale: draft.code, image: "abc" }), { message: "Unsupported locale" });
 });
 
+test("analysis accepts every production locale without accepting unknown locales", () => {
+  assert.equal(getProductionLocales().length, 18);
+  for (const locale of getProductionLocales()) {
+    const extract = normalizeRequest({
+      stage: "extract",
+      locale: locale.code,
+      images: [{ data: "page", mime: "image/jpeg" }]
+    });
+    assert.equal(extract.localeCode, locale.code);
+    assert.match(buildPrompt(locale.code), new RegExp(`"outputLocale": "${locale.code.replace("-", "\\-")}"`));
+  }
+  assert.throws(
+    () => normalizeRequest({ stage: "extract", locale: "en-GB", images: [{ data: "page", mime: "image/jpeg" }] }),
+    { message: "Unsupported locale" }
+  );
+});
+
 test("normalizes confidence metadata for automatic explanation requests", () => {
   const extraction = normalizeExtraction({ reportType: "Lab", findings: [{ test: "RBS", value: "96.0", unit: "mg/dL", confidence: "medium", sourceText: "R.B.S 96.0" }] });
   assert.equal(extraction.findings[0].confidence, "medium");

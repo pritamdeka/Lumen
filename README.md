@@ -94,7 +94,7 @@ vercel dev                  # serves on http://localhost:3000
 
 Run the zero-dependency test suite with `npm test`. It validates every provider request and response contract, fallback handling, malformed output handling, and both analysis stages without making billable network calls. Production exposes only locales with a current approved catalog checksum.
 
-Run `npm run review:translations:check` for deterministic catalog checks. After setting `DEEPINFRA_API_KEY` in ignored `.env.local`, run `npm run review:translations` for the paid dual-model semantic review. Gemma and Qwen review independently, Gemma 31B adjudicates disagreements, corrections are stored in a generated override file, and `docs/translation-review.md` records the method, date, correction count, and checksum. These are explicitly AI/API reviews; later human feedback is welcome but does not block the beta.
+Run `npm run review:translations:check` for deterministic catalog checks. Put the DeepInfra key in ignored `key.txt` (or set `DEEPINFRA_API_KEY` in ignored `.env.local`), then run `npm run review:translations` for the paid dual-model semantic review. Gemma and Qwen review independently, Gemma 31B adjudicates disagreements, corrections are stored in a generated override file, and `docs/translation-review.md` records the method, date, correction count, and checksum. These are explicitly AI/API reviews; later human feedback is welcome but does not block the beta.
 
 After exporting provider keys in your terminal, run `npm run test:providers:live` for an opt-in live smoke test. It sends only a generated blank test image, never a medical report. Do not paste API keys into source files, issues, or chat.
 

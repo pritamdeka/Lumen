@@ -45,6 +45,16 @@ test("speech request validation and SSML escaping are bounded", () => {
   assert.throws(() => normalizeSpeechRequest({ locale: productionLocale.code, text: "x".repeat(3001) }), /too long/);
 });
 
+test("speech accepts all 18 production locales with their configured neural voices", () => {
+  assert.equal(getProductionLocales().length, 18);
+  for (const locale of getProductionLocales()) {
+    const input = normalizeSpeechRequest({ locale: locale.code, text: "Reported value 12.5 mg/dL" });
+    assert.equal(input.locale, locale.code);
+    assert.equal(input.voice, AZURE_VOICES[locale.code].voice);
+    assert.match(buildSsml(input), new RegExp(`xml:lang="${AZURE_VOICES[locale.code].lang}"`));
+  }
+});
+
 test("speech API streams provider audio without caching", async () => {
   const oldFetch = global.fetch;
   const oldKey = process.env.AZURE_SPEECH_KEY;
