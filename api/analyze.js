@@ -1,7 +1,9 @@
-import { getLocale, hasExpectedScript, isProductionLocale, localeFromLegacyPrompt } from "../src/locales.js";
+import { getLocale, hasExpectedScript, isProductionLocale, localeFromLegacyPrompt, translate } from "../src/locales.js";
+import { MEDICAL_OCR_PROMPT, parseMedicalOcr } from "../src/ocr.js";
+import { buildExplanationTimeoutReport } from "../src/report-fallback.js";
 import { callProviderWithTimeout, getConfiguredProviders, getProviderStatus, MAX_PROVIDER_OUTPUT_TOKENS, PROVIDER_TIMEOUT_MS } from "./providers.js";
 
-export const config = { maxDuration: 60 };
+export const config = { maxDuration: 120 };
 export const MAX_PAGES = 5;
 export const MAX_IMAGE_DATA_CHARS = 4_000_000;
 export const MAX_FINDINGS = 250;
@@ -42,6 +44,30 @@ Return this exact JSON shape. Arrays must always be arrays and unavailable strin
 }`;
 }
 
+export function buildOcrStructuringPrompt(transcription) {
+  return `Convert the medical-results transcription below into compact JSON.
+Return one JSON object only, with this exact shape:
+{
+ "isMedical": true,
+ "reportType": "short visible document type",
+ "findings": [
+   {
+     "sourcePage": 1,
+     "test": "visible label",
+     "value": "visible result exactly",
+     "unit": "visible unit or empty",
+     "refRange": "visible printed range or empty",
+     "confidence": "high|medium|low",
+     "sourceText": "short supporting transcription"
+   }
+ ]
+}
+Include EVERY transcribed medical measurement, examination result, laboratory result, vaccination result, and reported status in source order. Keep repeated rows separate. Never explain, diagnose, invent, merge, or omit a transcribed result. Copy decimals, inequality signs, units, and ranges exactly. Use an empty string when a unit or range is absent.
+
+MEDICAL-RESULTS TRANSCRIPTION:
+${String(transcription || "")}`;
+}
+
 export function buildPrompt(localeCode, extraction = null) {
   const locale = getLocale(localeCode);
   const sourceInstruction = extraction
@@ -69,7 +95,7 @@ Return this exact JSON shape:
  "headline": "one warm sentence in the requested language (max 18 words)",
  "subline": "one sentence in the requested language (max 20 words)",
  "reportType": "document type in the requested language",
- "findings": [{"findingId":"copy exact ID from extracted data","test":"localized name","meaningShort":"plain meaning","value":"original display value","unit":"original unit","refRange":"original range if shown","numericValue":12.3,"referenceLow":10,"referenceHigh":20,"referenceKind":"interval|upper|lower|text","comparisonName":"stable unlocalized test name from extracted data","comparisonUnit":"normalized original unit","confidence":"high|medium|low","status":"normal|low|high|borderline|critical","explain":"one plain sentence for non-normal values, otherwise empty","confirmed":false}],
+ "findings": [{"findingId":"copy exact ID from extracted data","test":"localized name","meaningShort":"plain meaning","status":"normal|low|high|borderline|critical","explain":"one plain sentence for non-normal values, otherwise empty"}],
  "meaning": ["2-4 short paragraphs in the requested language"],
  "questions": ["4-6 questions in the requested language referencing actual values"],
  "lifestyle": ["2-4 gentle general wellbeing suggestions; never medication advice"],
@@ -310,9 +336,10 @@ function sendError(res, status, code, message) {
 export function outputTokenLimit(input) {
   if (input.stage === "explain") {
     const findings = input.extraction?.findings?.length || 0;
-    return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(3_000, 2_000 + findings * 80));
+    return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(3_000, 2_000 + findings * 40));
   }
-  return MAX_PROVIDER_OUTPUT_TOKENS;
+  const pages = Math.max(1, Math.min(MAX_PAGES, input.images?.length || 1));
+  return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, 4_000 + pages * 2_400);
 }
 
 export function providerAttemptTimeout(remainingMs, remainingProviders) {
@@ -326,6 +353,132 @@ export function providerFailureResponse(error) {
     return { status: 504, code: "analysis_timeout", message: "The analysis provider took too long. Please try again." };
   }
   return { status: 502, code: "providers_failed", message: "The analysis service is temporarily unavailable. Please try again." };
+}
+
+export async function extractWithDeepInfraOcr(provider, images, options = {}) {
+  if (!provider?.extractionModel || !Array.isArray(images) || !images.length) {
+    const error = new Error("OCR extraction is unavailable");
+    error.code = "invalid_extraction";
+    throw error;
+  }
+  const call = options.call || callProviderWithTimeout;
+  const ocrProvider = {
+    ...provider,
+    model: provider.extractionModel,
+    jsonMode: false,
+    extraBody: { ...(provider.extraBody || {}), reasoning_effort: "none", service_tier: "priority" }
+  };
+  const pages = await Promise.all(images.map((image, index) => call(
+    ocrProvider,
+    MEDICAL_OCR_PROMPT,
+    [image],
+    { timeoutMs: provider.timeoutMs || PROVIDER_TIMEOUT_MS, maxOutputTokens: 1_200 }
+  ).then(text => parseMedicalOcr(text, index + 1))));
+  const findings = pages.flat();
+  if (!findings.length) {
+    const error = new Error("OCR returned no medical findings");
+    error.code = "invalid_extraction";
+    throw error;
+  }
+  return normalizeExtraction({ isMedical: true, reportType: "Medical report", findings });
+}
+
+function buildFindingBatchPrompt(localeCode, findings) {
+  const locale = getLocale(localeCode);
+  return `Explain the extracted medical findings below in ${locale.prompt}, using the ${locale.script} writing system.
+Return one JSON object only:
+{
+ "outputLocale": "${locale.code}",
+ "findings": [
+   {
+     "findingId": "copy exact ID",
+     "test": "localized test name",
+     "meaningShort": "very short plain meaning",
+     "status": "normal|low|high|borderline|critical",
+     "explain": "one cautious plain sentence, or empty for a clearly normal result"
+   }
+ ]
+}
+Return exactly one item for every supplied finding, in the same order. Copy each findingId exactly. Use only the supplied values and printed report ranges. Never diagnose, predict disease, recommend medication changes, invent a range, or omit a finding. A status must be based only on the printed range or an explicit reported status; otherwise use "borderline" and explain that clinician interpretation is needed. Do not repeat values, units, or ranges in separate JSON fields.
+
+<extracted-findings>
+${JSON.stringify(findings.map(finding => ({
+  findingId: finding.findingId,
+  test: finding.test,
+  value: finding.value,
+  unit: finding.unit,
+  refRange: finding.refRange
+})))}
+</extracted-findings>`;
+}
+
+export async function explainWithDeepInfraBatches(provider, extraction, localeCode, options = {}) {
+  if (!provider?.explanationModel || !Array.isArray(extraction?.findings)) throw new Error("Batched explanation is unavailable");
+  const call = options.call || callProviderWithTimeout;
+  const batchSize = options.batchSize || 12;
+  const explanationProvider = {
+    ...provider,
+    model: provider.explanationModel,
+    jsonMode: true,
+    extraBody: { ...(provider.extraBody || {}), reasoning_effort: "none", service_tier: "priority" }
+  };
+  const batches = [];
+  for (let index = 0; index < extraction.findings.length; index += batchSize) batches.push(extraction.findings.slice(index, index + batchSize));
+  const explainedBatches = await Promise.all(batches.map(async batch => {
+    const raw = await call(explanationProvider, buildFindingBatchPrompt(localeCode, batch), [], {
+      timeoutMs: provider.timeoutMs || PROVIDER_TIMEOUT_MS,
+      maxOutputTokens: Math.max(800, Math.min(1_600, 300 + batch.length * 90))
+    });
+    const parsed = parseModelObject(raw);
+    if (parsed.outputLocale !== localeCode || !Array.isArray(parsed.findings)) throw new Error("Invalid explanation batch");
+    const byId = new Map();
+    for (const finding of parsed.findings) {
+      const findingId = cleanText(finding?.findingId, 80);
+      if (findingId && !byId.has(findingId)) byId.set(findingId, finding);
+    }
+    return batch.map(source => {
+      const finding = byId.get(source.findingId);
+      if (!finding) throw new Error("Incomplete explanation batch");
+      return {
+        findingId: source.findingId,
+        test: cleanText(finding.test) || source.test,
+        meaningShort: cleanText(finding.meaningShort, 300),
+        status: ["normal", "low", "high", "borderline", "critical"].includes(finding.status) ? finding.status : "borderline",
+        explain: cleanText(finding.explain, 500)
+      };
+    });
+  }));
+  const findings = explainedBatches.flat();
+  const narrative = findings.flatMap(finding => [finding.test, finding.meaningShort, finding.explain]).join(" ");
+  if (!hasExpectedScript(narrative, localeCode)) throw new Error("Wrong output script");
+  const overall = findings.some(finding => finding.status === "critical")
+    ? "urgent"
+    : findings.some(finding => finding.status !== "normal") ? "attention" : "ok";
+  return attachExtractionMetadata({
+    outputLocale: localeCode,
+    isMedical: extraction.isMedical !== false,
+    overall,
+    headline: translate(localeCode, "report"),
+    subline: `${findings.length} ${translate(localeCode, "findings")}`,
+    reportType: translate(localeCode, "report"),
+    findings,
+    meaning: [],
+    questions: [],
+    lifestyle: [],
+    glossary: [],
+    urgencyTitle: translate(localeCode, "disclaimerTitle"),
+    urgencyNote: translate(localeCode, "disclaimerBody")
+  }, extraction);
+}
+
+function neutralExplanationReport(extraction, localeCode) {
+  return buildExplanationTimeoutReport(extraction, localeCode, {
+    report: translate(localeCode, "report"),
+    uninterpreted: translate(localeCode, "uninterpreted"),
+    analysisTimeout: translate(localeCode, "analysisTimeout"),
+    disclaimerTitle: translate(localeCode, "disclaimerTitle"),
+    disclaimerBody: translate(localeCode, "disclaimerBody")
+  });
 }
 
 function retryableProviderFailure(error) {
@@ -414,6 +567,38 @@ export default async function handler(req, res) {
   if (providers.length === 0) {
     sendError(res, 500, "no_provider", "No AI provider configured");
     return;
+  }
+
+  if (input.stage === "extract") {
+    const ocrProvider = providers.find(provider => provider.extractionModel);
+    if (ocrProvider) {
+      try {
+        const extraction = await extractWithDeepInfraOcr(ocrProvider, input.images);
+        res.status(200).json({ extraction, provider: `${ocrProvider.name} OCR` });
+        return;
+      } catch (ocrError) {
+        const fallbackProviders = providers.filter(provider => provider !== ocrProvider);
+        if (!fallbackProviders.length) {
+          const failure = providerFailureResponse(ocrError);
+          sendError(res, failure.status, failure.code, failure.message);
+          return;
+        }
+        providers.splice(0, providers.length, ...fallbackProviders);
+      }
+    }
+  }
+
+  if (input.stage === "explain") {
+    const explanationProvider = providers.find(provider => provider.explanationModel);
+    if (explanationProvider) {
+      try {
+        const report = await explainWithDeepInfraBatches(explanationProvider, input.extraction, input.localeCode);
+        res.status(200).json({ report, provider: `${explanationProvider.name} Qwen` });
+      } catch {
+        res.status(200).json({ report: neutralExplanationReport(input.extraction, input.localeCode), provider: "Local fallback" });
+      }
+      return;
+    }
   }
 
   try {

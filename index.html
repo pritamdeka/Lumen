@@ -609,8 +609,9 @@ async function analyse(){
     const json=await apiRequest(payload);
     lastExtraction=json.extraction;
     currentAnalysisId=`report-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-    setStatus("");
-    await requestExplanation(json.extraction);
+    const pending=buildExplanationTimeoutReport(json.extraction,currentLang,{report:t("report"),uninterpreted:t("uninterpreted"),analysisTimeout:t("translating"),disclaimerTitle:t("disclaimerTitle"),disclaimerBody:t("disclaimerBody")});
+    pending.explanationTimedOut=false;lastReport=pending;render(pending,json.provider);
+    await requestExplanation(json.extraction,"translating",true);
   }catch(e){
     setStatus(String(e.message||e),true);
     go.disabled=false;

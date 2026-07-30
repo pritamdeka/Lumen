@@ -25,9 +25,12 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     kind: "openai",
     endpoint: "https://api.deepinfra.com/v1/openai/chat/completions",
     model: "google/gemma-4-26B-A4B-it",
+    extractionModel: "Qwen/Qwen3-VL-8B-Instruct",
+    explanationModel: "Qwen/Qwen3.6-35B-A3B",
     timeoutMs: 50_000,
     imageFirst: true,
-    sampling: Object.freeze({ temperature: 1, top_p: 0.95, top_k: 64 })
+    sampling: Object.freeze({ temperature: 0.2, top_p: 0.95, top_k: 64 }),
+    extraBody: Object.freeze({ reasoning_effort: "none" })
   })
 ]);
 
@@ -99,7 +102,7 @@ export function buildOpenAIRequest(provider, prompt, images, maxOutputTokens = M
     messages: [{ role: "user", content }],
     temperature: provider.sampling?.temperature ?? 0.2,
     max_tokens: maxOutputTokens,
-    response_format: { type: "json_object" },
+    ...(provider.jsonMode === false ? {} : { response_format: { type: "json_object" } }),
     stream: false,
     ...(provider.sampling?.top_p === undefined ? {} : { top_p: provider.sampling.top_p }),
     ...(provider.sampling?.top_k === undefined ? {} : { top_k: provider.sampling.top_k }),
@@ -117,6 +120,8 @@ export function getProviderStatus(environment = process.env) {
   return PROVIDER_DEFINITIONS.map(provider => ({
     name: provider.name,
     model: provider.model,
+    ...(provider.extractionModel ? { extractionModel: provider.extractionModel } : {}),
+    ...(provider.explanationModel ? { explanationModel: provider.explanationModel } : {}),
     timeoutMs: provider.timeoutMs,
     configured: typeof environment[provider.envKey] === "string" && Boolean(environment[provider.envKey].trim())
   }));

@@ -6,6 +6,8 @@ import handler, {
   attachExtractionMetadata,
   buildExtractionPrompt,
   buildPrompt,
+  extractWithDeepInfraOcr,
+  explainWithDeepInfraBatches,
   MAX_FINDINGS,
   MAX_IMAGE_DATA_CHARS,
   normalizeExtraction,
@@ -185,12 +187,13 @@ test("finding limits are explicit and never silently truncate", () => {
 });
 
 test("analysis duration and output budgets provide bounded provider fallback", () => {
-  assert.equal(config.maxDuration, 60);
+  assert.equal(config.maxDuration, 120);
   assert.equal(ANALYSIS_DEADLINE_MS, 55_000);
-  assert.equal(outputTokenLimit({ stage: "extract" }), 16_384);
+  assert.equal(outputTokenLimit({ stage: "extract" }), 6_400);
+  assert.equal(outputTokenLimit({ stage: "extract", images: Array.from({ length: 5 }) }), 16_000);
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: [] } }), 3_000);
-  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 50 }) } }), 6_000);
-  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 250 }) } }), 16_384);
+  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 50 }) } }), 4_000);
+  assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 250 }) } }), 12_000);
   assert.equal(providerAttemptTimeout(55_000, 1), 50_000);
   assert.equal(providerAttemptTimeout(55_000, 2), 27_000);
   assert.equal(providerAttemptTimeout(55_000, 3), 18_000);
@@ -290,6 +293,8 @@ test("the final provider retries one fast malformed response but not timeouts or
 test("deployment enables Fluid Compute for the bounded analysis duration", async () => {
   const deployment = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
   assert.equal(deployment.fluid, true);
+  assert.equal(deployment.functions["api/analyze.js"].maxDuration, 120);
+  assert.equal(deployment.functions["api/speech.js"].maxDuration, 30);
   const headers = deployment.headers.flatMap(rule => rule.headers);
   assert.ok(headers.some(header => header.key === "Strict-Transport-Security" && header.value.includes("max-age=31536000")));
 });
@@ -307,7 +312,7 @@ test("GET diagnostics list current models without exposing credentials", async (
     assert.deepEqual(response.body.providers, [
       { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
       { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
-      { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 50_000, configured: true }
+      { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", extractionModel: "Qwen/Qwen3-VL-8B-Instruct", explanationModel: "Qwen/Qwen3.6-35B-A3B", timeoutMs: 50_000, configured: true }
     ]);
     assert.equal(response.body.analysisDeadlineMs, 55_000);
     assert.equal(response.body.providerTimeoutMs, 50_000);
@@ -477,7 +482,9 @@ test("handler completes extraction and explanation with each provider configured
         assert.match(String(url), new RegExp(host.replaceAll(".", "\\.")));
         JSON.parse(options.body);
         const text = callNumber === 1
-          ? JSON.stringify({ isMedical: true, reportType: "Lab", findings: [{ sourcePage: 1, test: "Hb", value: "12.5", unit: "g/dL", refRange: "12-16", confidence: "high" }] })
+          ? providerName === "DeepInfra"
+            ? "Hb | 12.5 | g/dL | 12-16"
+            : JSON.stringify({ isMedical: true, reportType: "Lab", findings: [{ sourcePage: 1, test: "Hb", value: "12.5", unit: "g/dL", refRange: "12-16", confidence: "high" }] })
           : JSON.stringify({ ...report("en"), findings: [{ findingId: "finding-1", test: "Haemoglobin", meaningShort: "Blood protein", status: "normal", explain: "" }] });
         return providerName === "Gemini"
           ? { ok: true, status: 200, json: async () => ({ candidates: [{ finishReason: "STOP", content: { parts: [{ text }] } }] }) }
@@ -487,13 +494,13 @@ test("handler completes extraction and explanation with each provider configured
       const extractionResponse = mockResponse();
       await handler({ method: "POST", headers: { "x-forwarded-for": `only-${providerName}-extract` }, body: { stage: "extract", locale: "en", images: [{ data: "page", mime: "image/jpeg" }] } }, extractionResponse);
       assert.equal(extractionResponse.statusCode, 200, `${providerName} extraction`);
-      assert.equal(extractionResponse.body.provider, providerName);
+      assert.equal(extractionResponse.body.provider, providerName === "DeepInfra" ? "DeepInfra OCR" : providerName);
       assert.equal(extractionResponse.body.extraction.findings[0].value, "12.5");
 
       const explanationResponse = mockResponse();
       await handler({ method: "POST", headers: { "x-forwarded-for": `only-${providerName}-explain` }, body: { stage: "explain", locale: "en", extraction: extractionResponse.body.extraction } }, explanationResponse);
       assert.equal(explanationResponse.statusCode, 200, `${providerName} explanation`);
-      assert.equal(explanationResponse.body.provider, providerName);
+      assert.equal(explanationResponse.body.provider, providerName === "DeepInfra" ? "DeepInfra Qwen" : providerName);
       assert.equal(explanationResponse.body.report.totalFindings, 1);
       assert.equal(explanationResponse.body.report.findings[0].value, "12.5");
       assert.equal(callNumber, 2);
@@ -505,6 +512,78 @@ test("handler completes extraction and explanation with each provider configured
       else process.env[key] = saved[key];
     }
   }
+});
+
+test("DeepInfra OCR extracts every page concurrently with the dedicated model", async () => {
+  const calls = [];
+  const extraction = await extractWithDeepInfraOcr({
+    name: "DeepInfra",
+    model: "google/gemma-4-26B-A4B-it",
+    extractionModel: "Qwen/Qwen3-VL-8B-Instruct",
+    timeoutMs: 50_000,
+    extraBody: { reasoning_effort: "none" }
+  }, [
+    { data: "page-one", mime: "image/webp" },
+    { data: "page-two", mime: "image/png" }
+  ], {
+    async call(provider, prompt, images, options) {
+      calls.push({ provider, prompt, images, options });
+      return images[0].data === "page-one"
+        ? "R.B.S | 96.0 | mg/dL | 70-140"
+        : "Creatinine | 0.3 | mg/dL | 0.5-1.2";
+    }
+  });
+
+  assert.deepEqual(extraction.findings.map(finding => finding.sourcePage), [1, 2]);
+  assert.deepEqual(extraction.findings.map(finding => finding.value), ["96.0", "0.3"]);
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every(call => call.provider.model === "Qwen/Qwen3-VL-8B-Instruct"));
+  assert.ok(calls.every(call => call.provider.jsonMode === false));
+  assert.ok(calls.every(call => call.provider.extraBody.service_tier === "priority"));
+  assert.ok(calls.every(call => call.options.maxOutputTokens === 1_200));
+});
+
+test("DeepInfra explanations are split into bounded batches and preserve source values", async () => {
+  const extraction = normalizeExtraction({
+    reportType: "Lab",
+    findings: Array.from({ length: 25 }, (_, index) => ({
+      test: `Test ${index + 1}`,
+      value: String(index + 1),
+      unit: "mg/dL",
+      refRange: "1-30"
+    }))
+  });
+  const calls = [];
+  const report = await explainWithDeepInfraBatches({
+    name: "DeepInfra",
+    model: "google/gemma-4-26B-A4B-it",
+    explanationModel: "Qwen/Qwen3.6-35B-A3B",
+    timeoutMs: 50_000,
+    extraBody: { reasoning_effort: "none" }
+  }, extraction, "en", {
+    async call(provider, prompt, images, options) {
+      const data = JSON.parse(prompt.match(/<extracted-findings>\n([\s\S]*?)\n<\/extracted-findings>/)[1]);
+      calls.push({ provider, images, options, size: data.length });
+      return JSON.stringify({
+        outputLocale: "en",
+        findings: data.map(item => ({
+          findingId: item.findingId,
+          test: item.test,
+          meaningShort: "Plain meaning",
+          status: "normal",
+          explain: ""
+        }))
+      });
+    }
+  });
+
+  assert.deepEqual(calls.map(call => call.size), [12, 12, 1]);
+  assert.ok(calls.every(call => call.provider.model === "Qwen/Qwen3.6-35B-A3B"));
+  assert.ok(calls.every(call => call.images.length === 0));
+  assert.ok(calls.every(call => call.options.maxOutputTokens <= 1_600));
+  assert.equal(report.totalFindings, 25);
+  assert.equal(report.explainedFindings, 25);
+  assert.deepEqual(report.findings.map(finding => finding.value), extraction.findings.map(finding => finding.value));
 });
 
 test("API source does not log keys or report content", async () => {

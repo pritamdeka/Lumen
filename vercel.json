@@ -1,6 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "fluid": true,
+  "functions": {
+    "api/analyze.js": { "maxDuration": 120 },
+    "api/speech.js": { "maxDuration": 30 }
+  },
   "headers": [
     {
       "source": "/(.*)",

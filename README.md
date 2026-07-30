@@ -37,13 +37,13 @@ lumen-app/
 
 **Key handling:** API keys live in Vercel environment variables and are read only inside the serverless function. They are never sent to the browser and never appear in client source. Users don't need their own keys.
 
-**Provider fallback chain** — the backend tries each in order until one succeeds:
+**Provider routing** — DeepInfra uses smaller stage-specific models; Gemini and Groq remain generic fallbacks when DeepInfra is not configured or OCR fails:
 
 | Order | Provider | Model | Notes |
 |---|---|---|---|
 | 1 | Google Gemini | `gemini-2.5-flash` | Native structured JSON |
 | 2 | Groq | `qwen/qwen3.6-27b` | Vision and JSON object mode |
-| 3 | DeepInfra | `google/gemma-4-26B-A4B-it` | Vision and JSON object mode |
+| 3 | DeepInfra | `Qwen/Qwen3-VL-8B-Instruct` → `Qwen/Qwen3.6-35B-A3B` | Privacy-minimized OCR, then bounded parallel explanation batches |
 
 Configure at least one provider key. Providers whose keys are absent are skipped, so Gemini is optional when another provider is configured.
 
@@ -85,9 +85,11 @@ vercel --prod
 ### Run locally
 
 ```bash
-cp env.example.txt .env     # fill in your keys
-vercel dev                  # serves on http://localhost:3000
+cp env.example.txt .env.local  # fill in at least one analysis-provider key
+npm run dev                    # serves the site and local APIs on http://localhost:3000
 ```
+
+The zero-dependency local server loads `.env` followed by `.env.local`; values already exported in the terminal take precedence. It emulates the response helpers used by the Vercel functions and never serves environment files. Vercel CLI is not required for local development.
 
 Run the zero-dependency test suite with `npm test`. It validates every provider request and response contract, fallback handling, malformed output handling, and both analysis stages without making billable network calls. Production exposes only locales with a current approved catalog checksum.
 
@@ -95,15 +97,17 @@ Run `npm run review:translations:check` for deterministic catalog checks. Put th
 
 After exporting provider keys in your terminal, run `npm run test:providers:live` for an opt-in live smoke test. It validates both extraction and explanation, reports their latency, and sends only a generated blank test image—never a medical report. Do not paste API keys into source files, issues, or chat.
 
+For an explicitly authorized local report fixture, run `npm run test:report:local -- path/to/report.webp` while the local server is running. The command reports only stage, status, latency, provider, and finding count; it never prints extracted text.
+
 Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 
-Analysis functions have a 60-second ceiling and a 55-second internal deadline. Attempts are capped at 15 seconds for Gemini, 12 seconds for Groq, and 50 seconds for DeepInfra, while also respecting a fair share of the remaining deadline. DeepInfra receives the longer window only when sufficient function time remains—for example, when it is the sole configured provider. A stalled earlier provider still leaves a fair share for fallback. Gemini thinking is disabled for this extraction workflow to reduce latency.
+Analysis functions have a 120-second ceiling. DeepInfra OCR processes uploaded pages concurrently, excludes identity fields from its requested transcription, and uses a 1,200-token per-page limit. Explanations are split into parallel batches of at most 12 findings, with original values merged back by stable ID. Generic fallback attempts retain a 55-second internal deadline. Gemini thinking and DeepInfra/Qwen reasoning are disabled for these structured workflows.
 
 If extraction succeeds but explanation times out, Lumen keeps every extracted value visible in a neutral “not interpreted” state. The user can retry the explanation without uploading or extracting the report again.
 
 `GET /api/analyze` returns a credential-free diagnostic showing the configured provider names, model IDs, and timeout budgets. It never calls a provider or exposes a key.
 
-Opening `index.html` directly as a file will not work — `/api/analyze` needs the Vercel runtime.
+Opening `index.html` directly as a file will not work—the browser must use the local server so `/api/analyze` is available.
 
 ---
 

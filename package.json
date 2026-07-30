@@ -8,9 +8,10 @@
     "node": ">=18"
   },
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "node scripts/dev-server.js",
     "preview:fixture": "node test-fixtures/preview-server.js",
     "test": "node --test",
+    "test:report:local": "node scripts/local-report-smoke.js",
     "test:translations": "node --test test/locales.test.js test/translation-review.test.js",
     "review:translations:check": "node scripts/review-translations.js --check",
     "review:translations:probe": "node scripts/review-translations.js --probe",

@@ -48,7 +48,9 @@ test("frontend explains extracted values without a blocking confidence review", 
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /stage:"extract"/);
   assert.match(html, /stage:"explain"/);
-  assert.match(html, /await requestExplanation\(json\.extraction\)/);
+  assert.match(html, /await requestExplanation\(json\.extraction/);
+  assert.match(html, /pending=buildExplanationTimeoutReport\(json\.extraction,currentLang/);
+  assert.match(html, /pending\.explanationTimedOut=false;lastReport=pending;render\(pending,json\.provider\)/);
   assert.doesNotMatch(html, /id="reviewPanel"|collectConfirmedExtraction|renderReview|confirmReview/);
 });
 

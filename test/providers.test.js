@@ -48,7 +48,7 @@ test("provider diagnostics expose model and configuration state without credenti
   assert.deepEqual(status, [
     { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
     { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
-    { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 50_000, configured: false }
+    { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", extractionModel: "Qwen/Qwen3-VL-8B-Instruct", explanationModel: "Qwen/Qwen3.6-35B-A3B", timeoutMs: 50_000, configured: false }
   ]);
   assert.doesNotMatch(JSON.stringify(status), /secret|envKey|endpoint/);
 });
@@ -68,9 +68,10 @@ test("OpenAI-compatible requests use JSON mode and provider-specific multimodal 
       assert.equal(body.messages[0].content[0].image_url.url, "data:image/jpeg;base64,one");
       assert.equal(body.messages[0].content[1].image_url.url, "data:image/png;base64,two");
       assert.equal(body.messages[0].content[2].text, "prompt");
-      assert.equal(body.temperature, 1);
+      assert.equal(body.temperature, 0.2);
       assert.equal(body.top_p, 0.95);
       assert.equal(body.top_k, 64);
+      assert.equal(body.reasoning_effort, "none");
     } else {
       assert.equal(body.messages[0].content[0].text, "prompt");
       assert.equal(body.messages[0].content[1].image_url.url, "data:image/jpeg;base64,one");
@@ -86,6 +87,13 @@ test("text-only explanation requests use the broadly compatible string content s
     const body = buildOpenAIRequest(provider, "explain this extraction", []);
     assert.equal(body.messages[0].content, "explain this extraction");
   }
+});
+
+test("provider requests can disable JSON mode for an OCR transcription pass", () => {
+  const provider = { ...PROVIDER_DEFINITIONS.find(item => item.name === "DeepInfra"), jsonMode: false };
+  const body = buildOpenAIRequest(provider, "transcribe", [{ data: "image", mime: "image/webp" }], 2_000);
+  assert.equal(body.response_format, undefined);
+  assert.equal(body.messages[0].content[0].type, "image_url");
 });
 
 test("provider requests accept stage-specific output limits", () => {
