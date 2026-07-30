@@ -191,7 +191,7 @@ test("analysis duration and output budgets provide bounded provider fallback", (
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: [] } }), 3_000);
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 50 }) } }), 6_000);
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 250 }) } }), 16_384);
-  assert.equal(providerAttemptTimeout(55_000, 1), 35_000);
+  assert.equal(providerAttemptTimeout(55_000, 1), 50_000);
   assert.equal(providerAttemptTimeout(55_000, 2), 27_000);
   assert.equal(providerAttemptTimeout(55_000, 3), 18_000);
   assert.equal(providerAttemptTimeout(55_000, 4), 13_500);
@@ -307,10 +307,10 @@ test("GET diagnostics list current models without exposing credentials", async (
     assert.deepEqual(response.body.providers, [
       { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
       { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
-      { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 35_000, configured: true }
+      { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 50_000, configured: true }
     ]);
     assert.equal(response.body.analysisDeadlineMs, 55_000);
-    assert.equal(response.body.providerTimeoutMs, 35_000);
+    assert.equal(response.body.providerTimeoutMs, 50_000);
     assert.doesNotMatch(JSON.stringify(response.body), /private-key|envKey|endpoint|OpenRouter/);
   } finally {
     for (const key of keys) {

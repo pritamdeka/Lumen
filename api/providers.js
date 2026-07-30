@@ -1,5 +1,5 @@
 export const MAX_PROVIDER_OUTPUT_TOKENS = 16_384;
-export const PROVIDER_TIMEOUT_MS = 35_000;
+export const PROVIDER_TIMEOUT_MS = 50_000;
 
 export const PROVIDER_DEFINITIONS = Object.freeze([
   Object.freeze({
@@ -25,7 +25,7 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     kind: "openai",
     endpoint: "https://api.deepinfra.com/v1/openai/chat/completions",
     model: "google/gemma-4-26B-A4B-it",
-    timeoutMs: 35_000,
+    timeoutMs: 50_000,
     imageFirst: true,
     sampling: Object.freeze({ temperature: 1, top_p: 0.95, top_k: 64 })
   })

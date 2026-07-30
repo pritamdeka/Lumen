@@ -48,7 +48,7 @@ test("provider diagnostics expose model and configuration state without credenti
   assert.deepEqual(status, [
     { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
     { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
-    { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 35_000, configured: false }
+    { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 50_000, configured: false }
   ]);
   assert.doesNotMatch(JSON.stringify(status), /secret|envKey|endpoint/);
 });
@@ -92,7 +92,7 @@ test("provider requests accept stage-specific output limits", () => {
   for (const provider of PROVIDER_DEFINITIONS.filter(item => item.kind === "openai")) {
     assert.equal(buildOpenAIRequest(provider, "prompt", [], 4_000).max_tokens, 4_000);
   }
-  assert.equal(PROVIDER_TIMEOUT_MS, 35_000);
+  assert.equal(PROVIDER_TIMEOUT_MS, 50_000);
 });
 
 test("Gemini parser combines text parts and detects empty, error, and truncated envelopes", () => {

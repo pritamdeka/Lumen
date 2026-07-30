@@ -88,4 +88,9 @@ test("frontend includes visit toolkit accessibility fallbacks", async () => {
 test("frontend recognizes controlled analysis timeout responses", async () => {
   const html = await readFile(new URL("../index.html", import.meta.url), "utf8");
   assert.match(html, /analysis_timeout:"analysisTimeout"/);
+  assert.match(html, /localized\.code=error\?\.code/);
+  assert.match(html, /buildExplanationTimeoutReport\(extracted,currentLang/);
+  assert.match(html, /id="retryExplanationBtn"/);
+  assert.match(html, /retryExplanationBtn"\)\.onclick=\(\)=>\{if\(lastExtraction\)requestExplanation\(lastExtraction\)/);
+  assert.match(html, /r\.explanationTimedOut\?"inline-flex":"none"/);
 });

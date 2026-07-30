@@ -19,8 +19,8 @@ const extraction = {
 
 const mimeTypes = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".webp": "image/webp", ".css": "text/css; charset=utf-8", ".md": "text/plain; charset=utf-8" };
 
-function json(response, value) {
-  response.writeHead(200, { "Content-Type": "application/json" });
+function json(response, value, status = 200) {
+  response.writeHead(status, { "Content-Type": "application/json" });
   response.end(JSON.stringify(value));
 }
 
@@ -36,6 +36,9 @@ const server = http.createServer(async (request, response) => {
     for await (const chunk of request) body += chunk;
     const input = JSON.parse(body || "{}");
     if (input.stage === "extract") return json(response, { extraction, provider: "Fixture" });
+    if (String(request.headers.cookie || "").includes("lumen_fixture_error=timeout-explain")) {
+      return json(response, { code: "analysis_timeout", error: "The analysis provider took too long. Please try again." }, 504);
+    }
     const narrative = SCRIPT_FIXTURES[input.locale] || SCRIPT_FIXTURES.en;
     return json(response, {
       provider: "Fixture",
@@ -56,6 +59,7 @@ const server = http.createServer(async (request, response) => {
       }
       const headers = { "Content-Type": mimeTypes[".html"] };
       if (url.searchParams.get("error") === "plain") headers["Set-Cookie"] = "lumen_fixture_error=plain; Path=/; SameSite=Lax";
+      else if (url.searchParams.get("error") === "timeout-explain") headers["Set-Cookie"] = "lumen_fixture_error=timeout-explain; Path=/; SameSite=Lax";
       else headers["Set-Cookie"] = "lumen_fixture_error=; Path=/; Max-Age=0; SameSite=Lax";
       response.writeHead(200, headers);
       response.end(html);

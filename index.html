@@ -332,6 +332,7 @@
     </section>
 
     <div class="actions reveal">
+      <button id="retryExplanationBtn" style="display:none"><span data-icon="document"></span> <span id="retryExplanationLbl">Explain my report</span></button>
       <button id="retransBtn"><span data-icon="globe"></span> <span id="retransLbl">Change language</span></button>
       <button id="newBtn"><span data-icon="document"></span> <span id="newLbl">New report</span></button>
     </div>
@@ -362,6 +363,7 @@
 "use strict";
 import { DEFAULT_LOCALE, getLocale, getProductionLocales, translate } from "./src/locales.js";
 import { buildTrendSeries, createReminderIcs, filterFindings, rangePosition, statusGroup, summarizeFindings } from "./src/report-tools.js";
+import { buildExplanationTimeoutReport } from "./src/report-fallback.js";
 import { bestDeviceVoice, buildNarrationSections, splitNarrationSections } from "./src/speech.js";
 import { postAnalysis } from "./src/http.js";
 const $=id=>document.getElementById(id);
@@ -429,6 +431,7 @@ function applyUIStrings(){
   $("hLifestyle").textContent=t("lifestyle");
   $("copyQLbl").textContent=t("copyQuestions");
   $("printLbl").textContent=t("savePdf");
+  $("retryExplanationLbl").textContent=t("explain");
   $("retransLbl").textContent=t("changeLanguage");
   $("newLbl").textContent=t("newReport");
   $("langLbl").textContent=t("language");
@@ -591,7 +594,7 @@ $("manageProcessingConsent").onclick=()=>openProcessingConsent();
 const ERROR_KEYS={missing_images:"uploadFirst",too_many_pages:"tooManyPages",payload_too_large:"payloadTooLarge",too_many_findings:"tooManyFindings",invalid_image:"invalidFiles",invalid_extraction:"uploadFirst",invalid_response:"requestFailed",server_error:"requestFailed",network_error:"requestFailed",providers_failed:"requestFailed",analysis_timeout:"analysisTimeout",no_provider:"requestFailed",rate_limited:"requestFailed"};
 async function apiRequest(payload){
   try{return await postAnalysis(fetch,"/api/analyze",payload);}
-  catch(error){const key=ERROR_KEYS[error?.code]||"requestFailed";throw new Error(t(key));}
+  catch(error){const key=ERROR_KEYS[error?.code]||"requestFailed";const localized=new Error(t(key));localized.code=error?.code||"request_failed";localized.stage=payload?.stage;throw localized;}
 }
 async function analyse(){
   if(!pages.length) return;
@@ -618,11 +621,17 @@ go.onclick=analyse;
 async function requestExplanation(extraction,statusKey="translating",preserveScroll=false){
   setStatus(t(statusKey),false,true);go.disabled=true;
   let succeeded=false;
+  const extracted={...extraction,findings:(extraction.findings||[]).map(item=>({...item,confirmed:false}))};
   try{
-    const extracted={...extraction,findings:(extraction.findings||[]).map(item=>({...item,confirmed:false}))};
     const json=await apiRequest({stage:"explain",locale:currentLang,extraction:extracted});
     lastExtraction=extracted;lastReport=json.report;saveHistory(json.report,extracted);render(json.report,json.provider,!preserveScroll);setStatus("");succeeded=true;
-  }catch(e){setStatus(String(e.message||e),true);}
+  }catch(e){
+    if(e?.code==="analysis_timeout"){
+      const report=buildExplanationTimeoutReport(extracted,currentLang,{report:t("report"),uninterpreted:t("uninterpreted"),analysisTimeout:t("analysisTimeout"),disclaimerTitle:t("disclaimerTitle"),disclaimerBody:t("disclaimerBody")});
+      lastExtraction=extracted;lastReport=report;saveHistory(report,extracted);render(report,"",!preserveScroll);succeeded=true;
+    }
+    setStatus(String(e.message||e),true);
+  }
   go.disabled=false;return succeeded;
 }
 
@@ -710,6 +719,7 @@ function render(r,provider,scrollToResults=true){
   const glossary=$("glossary");glossary.textContent="";(r.glossary||[]).forEach(item=>{const details=document.createElement("details");details.className="glossary-item";const summary=document.createElement("summary");summary.textContent=item.term;const p=document.createElement("p");p.textContent=item.definition;details.append(summary,p);glossary.appendChild(details);});$("secGlossary").style.display=(r.glossary||[]).length?"block":"none";
 
   $("results").style.display="block";
+  $("retryExplanationBtn").style.display=r.explanationTimedOut?"inline-flex":"none";
   activateTab("Overview");if(scrollToResults)$("results").scrollIntoView({behavior:"smooth"});
 }
 
@@ -747,6 +757,7 @@ $("histBtn").onclick=()=>{
 $("clearHist").onclick=()=>{try{localStorage.removeItem("lumen_hist");}catch(e){}renderHist();};
 
 /* ---------------- actions ---------------- */
+$("retryExplanationBtn").onclick=()=>{if(lastExtraction)requestExplanation(lastExtraction);};
 $("copyQ").onclick=async()=>{
   const qs=[...document.querySelectorAll("#questions .q")].map(e=>"• "+e.textContent).join("\n");
   try{await navigator.clipboard.writeText(qs);

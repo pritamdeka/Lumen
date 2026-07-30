@@ -97,7 +97,9 @@ After exporting provider keys in your terminal, run `npm run test:providers:live
 
 Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 
-Analysis functions have a 60-second ceiling and a 55-second internal deadline. Attempts are capped at 15 seconds for Gemini, 12 seconds for Groq, and 35 seconds for DeepInfra, while also respecting a fair share of the remaining deadline. A stalled provider therefore falls back quickly enough for the next provider to run, while the slower final provider has a practical window when it is configured alone or earlier providers fail quickly. Gemini thinking is disabled for this extraction workflow to reduce latency.
+Analysis functions have a 60-second ceiling and a 55-second internal deadline. Attempts are capped at 15 seconds for Gemini, 12 seconds for Groq, and 50 seconds for DeepInfra, while also respecting a fair share of the remaining deadline. DeepInfra receives the longer window only when sufficient function time remains—for example, when it is the sole configured provider. A stalled earlier provider still leaves a fair share for fallback. Gemini thinking is disabled for this extraction workflow to reduce latency.
+
+If extraction succeeds but explanation times out, Lumen keeps every extracted value visible in a neutral “not interpreted” state. The user can retry the explanation without uploading or extracting the report again.
 
 `GET /api/analyze` returns a credential-free diagnostic showing the configured provider names, model IDs, and timeout budgets. It never calls a provider or exposes a key.
 
