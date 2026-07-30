@@ -13,6 +13,7 @@ import handler, {
   outputTokenLimit,
   providerAttemptTimeout,
   providerFailureResponse,
+  runProviderFallback,
   parseExtraction,
   parseModelObject,
   parseReport
@@ -140,6 +141,8 @@ test("model-output parsers reject empty, plain-text, HTML, and truncated data cl
 test("model JSON parser safely handles fences, prose, braces in strings, and multiple objects", () => {
   assert.deepEqual(parseModelObject('\uFEFF```json\n{"message":"value with } brace","ok":true}\n```'), { message: "value with } brace", ok: true });
   assert.deepEqual(parseModelObject('preface {"first":1} trailing {"second":2}'), { first: 1 });
+  assert.deepEqual(parseModelObject('<|channel>thought\n<channel|>\n{"gemma":4}'), { gemma: 4 });
+  assert.deepEqual(parseModelObject('<|channel>thought\ninternal {not json}\n<channel|>\n{"gemma":4}'), { gemma: 4 });
   assert.throws(() => parseModelObject("prefix {\"broken\": true"), /No valid JSON object/);
   assert.throws(() => parseModelObject("[]"), /No valid JSON object/);
 });
@@ -181,16 +184,17 @@ test("finding limits are explicit and never silently truncate", () => {
   assert.throws(() => normalizeExtraction({ findings: Array.from({ length: MAX_FINDINGS + 1 }, () => ({})) }), { message: "Report contains too many findings" });
 });
 
-test("analysis duration and output budgets fit the Vercel deadline", () => {
-  assert.equal(config.maxDuration, 300);
-  assert.equal(ANALYSIS_DEADLINE_MS, 285_000);
+test("analysis duration and output budgets provide bounded provider fallback", () => {
+  assert.equal(config.maxDuration, 60);
+  assert.equal(ANALYSIS_DEADLINE_MS, 55_000);
   assert.equal(outputTokenLimit({ stage: "extract" }), 16_384);
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: [] } }), 3_000);
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 50 }) } }), 6_000);
   assert.equal(outputTokenLimit({ stage: "explain", extraction: { findings: Array.from({ length: 250 }) } }), 16_384);
-  assert.equal(providerAttemptTimeout(285_000, 1), 180_000);
-  assert.equal(providerAttemptTimeout(285_000, 2), 142_000);
-  assert.equal(providerAttemptTimeout(285_000, 4), 71_000);
+  assert.equal(providerAttemptTimeout(55_000, 1), 35_000);
+  assert.equal(providerAttemptTimeout(55_000, 2), 27_000);
+  assert.equal(providerAttemptTimeout(55_000, 3), 18_000);
+  assert.equal(providerAttemptTimeout(55_000, 4), 13_500);
   assert.equal(providerAttemptTimeout(500, 1), 1_000);
   assert.deepEqual(providerFailureResponse({ code: "provider_timeout" }), {
     status: 504,
@@ -200,16 +204,125 @@ test("analysis duration and output budgets fit the Vercel deadline", () => {
   assert.equal(providerFailureResponse(new Error("bad response")).code, "providers_failed");
 });
 
-test("deployment explicitly enables Fluid Compute for the 300-second duration", async () => {
+test("fallback skips retired and timed-out providers without losing the final provider", async () => {
+  const providers = [
+    { name: "Retired", timeoutMs: 15_000 },
+    { name: "Slow", timeoutMs: 12_000 },
+    { name: "Healthy", timeoutMs: 35_000 }
+  ];
+  const calls = [];
+  const result = await runProviderFallback(providers, {
+    prompt: "prompt",
+    images: [{ data: "page", mime: "image/jpeg" }],
+    maxOutputTokens: 4_000
+  }, {
+    now: () => 1_000,
+    call: async (provider, prompt, images, options) => {
+      calls.push({ name: provider.name, prompt, images, options });
+      if (provider.name === "Retired") throw new Error("HTTP 404");
+      if (provider.name === "Slow") throw Object.assign(new Error("timed out"), { code: "provider_timeout" });
+      return '{"ok":true}';
+    },
+    accept: async (raw, provider) => ({ raw, provider: provider.name })
+  });
+  assert.deepEqual(result, { raw: '{"ok":true}', provider: "Healthy" });
+  assert.deepEqual(calls.map(call => call.name), ["Retired", "Slow", "Healthy"]);
+  assert.deepEqual(calls.map(call => call.options.timeoutMs), [15_000, 12_000, 35_000]);
+  assert.ok(calls.every(call => call.options.maxOutputTokens === 4_000));
+  assert.ok(calls.every(call => call.images.length === 1));
+});
+
+test("fallback stops before the platform deadline and reports a controlled timeout", async () => {
+  const times = [0, 0, 54_500];
+  const calls = [];
+  await assert.rejects(
+    runProviderFallback([{ name: "First" }, { name: "Second" }], {
+      prompt: "prompt", images: [], maxOutputTokens: 3_000
+    }, {
+      deadlineMs: 55_000,
+      now: () => times.shift() ?? 54_500,
+      call: async provider => {
+        calls.push(provider.name);
+        throw new Error("provider failed");
+      }
+    }),
+    error => error.code === "provider_timeout" && /deadline/i.test(error.message)
+  );
+  assert.deepEqual(calls, ["First"]);
+});
+
+test("the final provider retries one fast malformed response but not timeouts or permanent 4xx errors", async () => {
+  let malformedCalls = 0;
+  const recovered = await runProviderFallback([{ name: "DeepInfra", timeoutMs: 35_000 }], {
+    prompt: "prompt", images: [], maxOutputTokens: 3_000
+  }, {
+    now: () => 0,
+    call: async () => {
+      malformedCalls++;
+      return malformedCalls === 1 ? "wrong shape" : '{"ok":true}';
+    },
+    accept: async raw => {
+      if (raw === "wrong shape") throw new Error("Invalid report shape");
+      return raw;
+    }
+  });
+  assert.equal(recovered, '{"ok":true}');
+  assert.equal(malformedCalls, 2);
+
+  for (const failure of [
+    Object.assign(new Error("timed out"), { code: "provider_timeout" }),
+    new Error("DeepInfra HTTP 400")
+  ]) {
+    let calls = 0;
+    await assert.rejects(runProviderFallback([{ name: "DeepInfra", timeoutMs: 35_000 }], {
+      prompt: "prompt", images: [], maxOutputTokens: 3_000
+    }, {
+      now: () => 0,
+      call: async () => {
+        calls++;
+        throw failure;
+      }
+    }));
+    assert.equal(calls, 1);
+  }
+});
+
+test("deployment enables Fluid Compute for the bounded analysis duration", async () => {
   const deployment = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"));
   assert.equal(deployment.fluid, true);
   const headers = deployment.headers.flatMap(rule => rule.headers);
   assert.ok(headers.some(header => header.key === "Strict-Transport-Security" && header.value.includes("max-age=31536000")));
 });
 
+test("GET diagnostics list current models without exposing credentials", async () => {
+  const keys = ["GEMINI_API_KEY", "GROQ_API_KEY", "DEEPINFRA_API_KEY"];
+  const saved = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  process.env.GEMINI_API_KEY = "gemini-private-key";
+  delete process.env.GROQ_API_KEY;
+  process.env.DEEPINFRA_API_KEY = "deepinfra-private-key";
+  try {
+    const response = mockResponse();
+    await handler({ method: "GET", headers: {} }, response);
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.body.providers, [
+      { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
+      { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
+      { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 35_000, configured: true }
+    ]);
+    assert.equal(response.body.analysisDeadlineMs, 55_000);
+    assert.equal(response.body.providerTimeoutMs, 35_000);
+    assert.doesNotMatch(JSON.stringify(response.body), /private-key|envKey|endpoint|OpenRouter/);
+  } finally {
+    for (const key of keys) {
+      if (saved[key] === undefined) delete process.env[key];
+      else process.env[key] = saved[key];
+    }
+  }
+});
+
 test("handler rejects unsupported methods and malformed requests", async () => {
   const methodResponse = mockResponse();
-  await handler({ method: "GET", headers: {} }, methodResponse);
+  await handler({ method: "PUT", headers: {} }, methodResponse);
   assert.equal(methodResponse.statusCode, 405);
   assert.equal(methodResponse.body.code, "method_not_allowed");
 
@@ -345,14 +458,13 @@ test("handler falls back when a provider returns invalid transport JSON", async 
 });
 
 test("handler completes extraction and explanation with each provider configured alone", async () => {
-  const keys = ["GEMINI_API_KEY", "GROQ_API_KEY", "DEEPINFRA_API_KEY", "OPENROUTER_API_KEY"];
+  const keys = ["GEMINI_API_KEY", "GROQ_API_KEY", "DEEPINFRA_API_KEY"];
   const saved = Object.fromEntries(keys.map(key => [key, process.env[key]]));
   const oldFetch = global.fetch;
   const providers = [
     ["GEMINI_API_KEY", "Gemini", "googleapis"],
     ["GROQ_API_KEY", "Groq", "api.groq.com"],
-    ["DEEPINFRA_API_KEY", "DeepInfra", "api.deepinfra.com"],
-    ["OPENROUTER_API_KEY", "OpenRouter", "openrouter.ai"]
+    ["DEEPINFRA_API_KEY", "DeepInfra", "api.deepinfra.com"]
   ];
   try {
     for (const key of keys) delete process.env[key];

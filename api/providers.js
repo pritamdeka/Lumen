@@ -1,11 +1,13 @@
 export const MAX_PROVIDER_OUTPUT_TOKENS = 16_384;
-export const PROVIDER_TIMEOUT_MS = 180_000;
+export const PROVIDER_TIMEOUT_MS = 35_000;
 
 export const PROVIDER_DEFINITIONS = Object.freeze([
   Object.freeze({
     name: "Gemini",
     envKey: "GEMINI_API_KEY",
     kind: "gemini",
+    model: "gemini-2.5-flash",
+    timeoutMs: 15_000,
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
   }),
   Object.freeze({
@@ -14,6 +16,7 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     kind: "openai",
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
     model: "qwen/qwen3.6-27b",
+    timeoutMs: 12_000,
     extraBody: Object.freeze({ reasoning_effort: "none" })
   }),
   Object.freeze({
@@ -21,14 +24,10 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     envKey: "DEEPINFRA_API_KEY",
     kind: "openai",
     endpoint: "https://api.deepinfra.com/v1/openai/chat/completions",
-    model: "google/gemma-4-26B-A4B-it"
-  }),
-  Object.freeze({
-    name: "OpenRouter",
-    envKey: "OPENROUTER_API_KEY",
-    kind: "openai",
-    endpoint: "https://openrouter.ai/api/v1/chat/completions",
-    model: "qwen/qwen2.5-vl-72b-instruct"
+    model: "google/gemma-4-26B-A4B-it",
+    timeoutMs: 35_000,
+    imageFirst: true,
+    sampling: Object.freeze({ temperature: 1, top_p: 0.95, top_k: 64 })
   })
 ]);
 
@@ -86,22 +85,24 @@ export function extractOpenAIText(json, name = "Provider") {
 }
 
 export function buildOpenAIRequest(provider, prompt, images, maxOutputTokens = MAX_PROVIDER_OUTPUT_TOKENS) {
+  const imageParts = images.map(image => ({
+    type: "image_url",
+    image_url: { url: `data:${image.mime};base64,${image.data}` }
+  }));
   const content = images.length === 0
     ? prompt
-    : [
-        { type: "text", text: prompt },
-        ...images.map(image => ({
-          type: "image_url",
-          image_url: { url: `data:${image.mime};base64,${image.data}` }
-        }))
-      ];
+    : provider.imageFirst
+      ? [...imageParts, { type: "text", text: prompt }]
+      : [{ type: "text", text: prompt }, ...imageParts];
   return {
     model: provider.model,
     messages: [{ role: "user", content }],
-    temperature: 0.2,
+    temperature: provider.sampling?.temperature ?? 0.2,
     max_tokens: maxOutputTokens,
     response_format: { type: "json_object" },
     stream: false,
+    ...(provider.sampling?.top_p === undefined ? {} : { top_p: provider.sampling.top_p }),
+    ...(provider.sampling?.top_k === undefined ? {} : { top_k: provider.sampling.top_k }),
     ...(provider.extraBody || {})
   };
 }
@@ -110,6 +111,15 @@ export function getConfiguredProviders(environment = process.env) {
   return PROVIDER_DEFINITIONS
     .filter(provider => typeof environment[provider.envKey] === "string" && environment[provider.envKey].trim())
     .map(provider => ({ ...provider, key: environment[provider.envKey].trim() }));
+}
+
+export function getProviderStatus(environment = process.env) {
+  return PROVIDER_DEFINITIONS.map(provider => ({
+    name: provider.name,
+    model: provider.model,
+    timeoutMs: provider.timeoutMs,
+    configured: typeof environment[provider.envKey] === "string" && Boolean(environment[provider.envKey].trim())
+  }));
 }
 
 export async function callProvider(provider, prompt, images, fetchImplementation = globalThis.fetch, options = {}) {
@@ -132,7 +142,8 @@ export async function callProvider(provider, prompt, images, fetchImplementation
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens,
-          responseMimeType: "application/json"
+          responseMimeType: "application/json",
+          thinkingConfig: { thinkingBudget: 0 }
         }
       })
     });

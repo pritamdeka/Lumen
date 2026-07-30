@@ -1,11 +1,11 @@
 import { getLocale, hasExpectedScript, isProductionLocale, localeFromLegacyPrompt } from "../src/locales.js";
-import { callProviderWithTimeout, getConfiguredProviders, MAX_PROVIDER_OUTPUT_TOKENS, PROVIDER_TIMEOUT_MS } from "./providers.js";
+import { callProviderWithTimeout, getConfiguredProviders, getProviderStatus, MAX_PROVIDER_OUTPUT_TOKENS, PROVIDER_TIMEOUT_MS } from "./providers.js";
 
-export const config = { maxDuration: 300 };
+export const config = { maxDuration: 60 };
 export const MAX_PAGES = 5;
 export const MAX_IMAGE_DATA_CHARS = 4_000_000;
 export const MAX_FINDINGS = 250;
-export const ANALYSIS_DEADLINE_MS = 285_000;
+export const ANALYSIS_DEADLINE_MS = 55_000;
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const HITS = new Map();
@@ -133,7 +133,10 @@ export function parseExtraction(text) {
 }
 
 export function parseModelObject(text) {
-  const source = String(text ?? "").replace(/^\uFEFF/, "").trim();
+  const source = String(text ?? "")
+    .replace(/^\uFEFF/, "")
+    .replace(/^\s*<\|channel>thought\b[\s\S]*?<channel\|>\s*/i, "")
+    .trim();
   if (!source) throw new Error("No JSON object in model output");
   try {
     const value = JSON.parse(source);
@@ -325,7 +328,56 @@ export function providerFailureResponse(error) {
   return { status: 502, code: "providers_failed", message: "The analysis service is temporarily unavailable. Please try again." };
 }
 
+function retryableProviderFailure(error) {
+  if (error?.code === "provider_timeout") return false;
+  return !/\bHTTP 4\d\d\b/i.test(String(error?.message || ""));
+}
+
+export async function runProviderFallback(providers, request, options = {}) {
+  const call = options.call || callProviderWithTimeout;
+  const now = options.now || Date.now;
+  const deadlineMs = options.deadlineMs || ANALYSIS_DEADLINE_MS;
+  const startedAt = now();
+  let lastError = null;
+  for (const [providerIndex, provider] of providers.entries()) {
+    const maxAttempts = providerIndex === providers.length - 1 ? 2 : 1;
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const remainingMs = deadlineMs - (now() - startedAt);
+      if (remainingMs <= 1_000) {
+        lastError = Object.assign(new Error("Analysis deadline reached"), { code: "provider_timeout" });
+        break;
+      }
+      try {
+        const raw = await call(provider, request.prompt, request.images, {
+          timeoutMs: Math.min(
+            provider.timeoutMs || PROVIDER_TIMEOUT_MS,
+            providerAttemptTimeout(remainingMs, providers.length - providerIndex)
+          ),
+          maxOutputTokens: request.maxOutputTokens
+        });
+        return options.accept ? await options.accept(raw, provider) : { raw, provider };
+      } catch (error) {
+        lastError = error;
+        const retryBudgetMs = deadlineMs - (now() - startedAt);
+        if (attempt + 1 >= maxAttempts || retryBudgetMs <= 10_000 || !retryableProviderFailure(error)) break;
+      }
+    }
+    if (lastError?.code === "provider_timeout" && deadlineMs - (now() - startedAt) <= 1_000) break;
+  }
+  throw lastError || new Error("No analysis provider succeeded");
+}
+
 export default async function handler(req, res) {
+  if (req.method === "GET") {
+    const providers = getProviderStatus();
+    res.status(200).json({
+      status: providers.some(provider => provider.configured) ? "configured" : "unconfigured",
+      providers,
+      analysisDeadlineMs: ANALYSIS_DEADLINE_MS,
+      providerTimeoutMs: PROVIDER_TIMEOUT_MS
+    });
+    return;
+  }
   if (req.method !== "POST") {
     sendError(res, 405, "method_not_allowed", "Method not allowed");
     return;
@@ -364,32 +416,24 @@ export default async function handler(req, res) {
     return;
   }
 
-  let lastError = null;
-  const startedAt = Date.now();
-  for (const [providerIndex, provider] of providers.entries()) {
-    const remainingMs = ANALYSIS_DEADLINE_MS - (Date.now() - startedAt);
-    if (remainingMs <= 1_000) {
-      lastError = Object.assign(new Error("Analysis deadline reached"), { code: "provider_timeout" });
-      break;
-    }
-    try {
-      const remainingProviders = providers.length - providerIndex;
-      const raw = await callProviderWithTimeout(provider, prompt, input.images, {
-        timeoutMs: providerAttemptTimeout(remainingMs, remainingProviders),
-        maxOutputTokens: outputTokenLimit(input)
-      });
-      if (input.stage === "extract") {
-        const extraction = parseExtraction(raw);
-        res.status(200).json({ extraction, provider: provider.name });
-        return;
+  try {
+    const result = await runProviderFallback(providers, {
+      prompt,
+      images: input.images,
+      maxOutputTokens: outputTokenLimit(input)
+    }, {
+      accept(raw, provider) {
+        if (input.stage === "extract") {
+          const extraction = parseExtraction(raw);
+          return { extraction, provider: provider.name };
+        }
+        const report = attachExtractionMetadata(parseReport(raw, input.localeCode), input.extraction);
+        return { report, provider: provider.name };
       }
-      const report = attachExtractionMetadata(parseReport(raw, input.localeCode), input.extraction);
-      res.status(200).json({ report, provider: provider.name });
-      return;
-    } catch (error) {
-      lastError = error;
-    }
+    });
+    res.status(200).json(result);
+  } catch (error) {
+    const failure = providerFailureResponse(error);
+    sendError(res, failure.status, failure.code, failure.message);
   }
-  const failure = providerFailureResponse(lastError);
-  sendError(res, failure.status, failure.code, failure.message);
 }

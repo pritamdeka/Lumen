@@ -27,3 +27,12 @@ test("review runner supports local key.txt without logging credentials or report
   assert.doesNotMatch(source, /console\.(?:log|error)\([^)]*(?:apiKey|DEEPINFRA_API_KEY)/i);
   assert.doesNotMatch(source, /api\/analyze|sourceText|findingId|reportType/);
 });
+
+test("unused OpenRouter integration is absent from runtime and setup documentation", async () => {
+  const files = await Promise.all([
+    readFile(new URL("../api/providers.js", import.meta.url), "utf8"),
+    readFile(new URL("../env.example.txt", import.meta.url), "utf8"),
+    readFile(new URL("../README.md", import.meta.url), "utf8")
+  ]);
+  assert.doesNotMatch(files.join("\n"), /OPENROUTER|OpenRouter|openrouter\.ai|qwen2\.5-vl-72b/i);
+});

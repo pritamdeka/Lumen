@@ -2,7 +2,7 @@
 
 **Your medical report, finally in plain words.**
 
-Upload a photo of a lab report, prescription, or discharge summary. Lumen explains every value in plain language, flags what needs attention, and prepares the questions to ask your doctor — in English or 12 Indian languages.
+Upload a photo of a lab report, prescription, or discharge summary. Lumen explains every value in plain language, flags what needs attention, and prepares questions to ask your doctor in 18 supported languages.
 
 Lumen translates. It does not diagnose.
 
@@ -14,7 +14,7 @@ Lumen translates. It does not diagnose.
 - **Explains every value** with reference ranges and colour-coded status chips
 - **Flags urgency** (ok / attention / urgent) with non-alarmist follow-up guidance
 - **Generates doctor questions** referencing the patient's actual values, one tap to copy
-- **13 languages** — English, हिन्दी, বাংলা, অসমীয়া, தமிழ், తెలుగు, मराठी, ಕನ್ನಡ, ગુજરાતી, മലയാളം, ਪੰਜਾਬੀ, ଓଡିଆ, اردو
+- **18 languages** — English, हिन्दी, বাংলা, অসমীয়া, தமிழ், తెలుగు, मराठी, ಕನ್ನಡ, ગુજરાતી, മലയാളം, ਪੰਜਾਬੀ, ଓଡ଼ିଆ, اردو, Español, Français, Deutsch, Italiano, Português
 - **Switch language on an existing report** without re-uploading
 - **Multi-page upload** (up to 5 pages), drag-drop or paste from clipboard
 - **Dark mode**, follows system preference
@@ -32,7 +32,7 @@ lumen-app/
 │   └── analyze.js    # Vercel serverless function; holds the API keys
 ├── vercel.json       # Security headers
 ├── package.json
-└── .env.example      # Environment variable template
+└── env.example.txt    # Environment variable template
 ```
 
 **Key handling:** API keys live in Vercel environment variables and are read only inside the serverless function. They are never sent to the browser and never appear in client source. Users don't need their own keys.
@@ -44,7 +44,6 @@ lumen-app/
 | 1 | Google Gemini | `gemini-2.5-flash` | Native structured JSON |
 | 2 | Groq | `qwen/qwen3.6-27b` | Vision and JSON object mode |
 | 3 | DeepInfra | `google/gemma-4-26B-A4B-it` | Vision and JSON object mode |
-| 4 | OpenRouter | `qwen/qwen2.5-vl-72b-instruct` | Vision and JSON object mode |
 
 Configure at least one provider key. Providers whose keys are absent are skipped, so Gemini is optional when another provider is configured.
 
@@ -61,12 +60,11 @@ Configure at least one provider key. Providers whose keys are absent are skipped
 
    | Name | Value | Required |
    |---|---|---|
-   | `GEMINI_API_KEY` | your Gemini key | yes |
+   | `GEMINI_API_KEY` | your Gemini key | optional if another analysis provider is configured |
    | `GROQ_API_KEY` | your Groq key | optional |
    | `DEEPINFRA_API_KEY` | your DeepInfra key | optional |
-| `OPENROUTER_API_KEY` | your OpenRouter key | optional |
-| `AZURE_SPEECH_KEY` | Azure Speech resource key | optional; enables natural narration |
-| `AZURE_SPEECH_REGION` | Azure region, for example `uksouth` | required with the speech key |
+   | `AZURE_SPEECH_KEY` | Azure Speech resource key | optional; enables natural narration |
+   | `AZURE_SPEECH_REGION` | Azure region, for example `uksouth` | required with the speech key |
 
 5. Deploy. Done — no build step, no database.
 
@@ -79,7 +77,6 @@ vercel                      # link the project
 vercel env add GEMINI_API_KEY
 vercel env add GROQ_API_KEY          # optional
 vercel env add DEEPINFRA_API_KEY     # optional
-vercel env add OPENROUTER_API_KEY    # optional
 vercel env add AZURE_SPEECH_KEY      # optional
 vercel env add AZURE_SPEECH_REGION   # required with speech key
 vercel --prod
@@ -88,7 +85,7 @@ vercel --prod
 ### Run locally
 
 ```bash
-cp .env.example .env        # fill in your keys
+cp env.example.txt .env     # fill in your keys
 vercel dev                  # serves on http://localhost:3000
 ```
 
@@ -96,11 +93,13 @@ Run the zero-dependency test suite with `npm test`. It validates every provider 
 
 Run `npm run review:translations:check` for deterministic catalog checks. Put the DeepInfra key in ignored `key.txt` (or set `DEEPINFRA_API_KEY` in ignored `.env.local`), then run `npm run review:translations` for the paid dual-model semantic review. Gemma and Qwen review independently, Gemma 31B adjudicates disagreements, corrections are stored in a generated override file, and `docs/translation-review.md` records the method, date, correction count, and checksum. These are explicitly AI/API reviews; later human feedback is welcome but does not block the beta.
 
-After exporting provider keys in your terminal, run `npm run test:providers:live` for an opt-in live smoke test. It sends only a generated blank test image, never a medical report. Do not paste API keys into source files, issues, or chat.
+After exporting provider keys in your terminal, run `npm run test:providers:live` for an opt-in live smoke test. It validates both extraction and explanation, reports their latency, and sends only a generated blank test image—never a medical report. Do not paste API keys into source files, issues, or chat.
 
 Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 
-The deployment explicitly enables Vercel Fluid Compute and allows up to 300 seconds for analysis. Provider calls receive a fair share of a 285-second internal deadline, capped at 180 seconds each, so a slow provider can fall back without letting Vercel terminate the function with an unstructured timeout response.
+Analysis functions have a 60-second ceiling and a 55-second internal deadline. Attempts are capped at 15 seconds for Gemini, 12 seconds for Groq, and 35 seconds for DeepInfra, while also respecting a fair share of the remaining deadline. A stalled provider therefore falls back quickly enough for the next provider to run, while the slower final provider has a practical window when it is configured alone or earlier providers fail quickly. Gemini thinking is disabled for this extraction workflow to reduce latency.
+
+`GET /api/analyze` returns a credential-free diagnostic showing the configured provider names, model IDs, and timeout budgets. It never calls a provider or exposes a key.
 
 Opening `index.html` directly as a file will not work — `/api/analyze` needs the Vercel runtime.
 
@@ -113,7 +112,6 @@ Opening `index.html` directly as a file will not work — `/api/analyze` needs t
 | Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | 1,500 req/day, no card |
 | Groq | [console.groq.com/keys](https://console.groq.com/keys) | Yes, generous |
 | DeepInfra | [deepinfra.com/dash/api_keys](https://deepinfra.com/dash/api_keys) | Pay-as-you-go, very cheap |
-| OpenRouter | [openrouter.ai/keys](https://openrouter.ai/keys) | Yes, limited |
 
 ---
 

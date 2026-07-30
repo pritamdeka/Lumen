@@ -7,16 +7,16 @@ import {
   extractGeminiText,
   extractOpenAIText,
   getConfiguredProviders,
+  getProviderStatus,
   MAX_PROVIDER_OUTPUT_TOKENS,
   PROVIDER_TIMEOUT_MS,
   PROVIDER_DEFINITIONS
 } from "../api/providers.js";
 
 const EXPECTED_MODELS = {
-  Gemini: null,
+  Gemini: "gemini-2.5-flash",
   Groq: "qwen/qwen3.6-27b",
-  DeepInfra: "google/gemma-4-26B-A4B-it",
-  OpenRouter: "qwen/qwen2.5-vl-72b-instruct"
+  DeepInfra: "google/gemma-4-26B-A4B-it"
 };
 
 function response(json, overrides = {}) {
@@ -24,7 +24,7 @@ function response(json, overrides = {}) {
 }
 
 test("provider registry has one current, credential-free definition per provider", () => {
-  assert.deepEqual(PROVIDER_DEFINITIONS.map(item => item.name), ["Gemini", "Groq", "DeepInfra", "OpenRouter"]);
+  assert.deepEqual(PROVIDER_DEFINITIONS.map(item => item.name), ["Gemini", "Groq", "DeepInfra"]);
   for (const provider of PROVIDER_DEFINITIONS) {
     assert.equal(provider.model || null, EXPECTED_MODELS[provider.name]);
     assert.match(provider.endpoint, /^https:\/\//);
@@ -37,14 +37,23 @@ test("configured providers preserve fallback order and ignore blank keys", () =>
   const configured = getConfiguredProviders({
     GEMINI_API_KEY: " gemini-secret ",
     GROQ_API_KEY: "",
-    DEEPINFRA_API_KEY: "deepinfra-secret",
-    OPENROUTER_API_KEY: "   "
+    DEEPINFRA_API_KEY: "deepinfra-secret"
   });
   assert.deepEqual(configured.map(item => item.name), ["Gemini", "DeepInfra"]);
   assert.deepEqual(configured.map(item => item.key), ["gemini-secret", "deepinfra-secret"]);
 });
 
-test("OpenAI-compatible requests use JSON mode and preserve every image in order", () => {
+test("provider diagnostics expose model and configuration state without credentials", () => {
+  const status = getProviderStatus({ GEMINI_API_KEY: "secret", GROQ_API_KEY: "  " });
+  assert.deepEqual(status, [
+    { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
+    { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
+    { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", timeoutMs: 35_000, configured: false }
+  ]);
+  assert.doesNotMatch(JSON.stringify(status), /secret|envKey|endpoint/);
+});
+
+test("OpenAI-compatible requests use JSON mode and provider-specific multimodal ordering", () => {
   for (const provider of PROVIDER_DEFINITIONS.filter(item => item.kind === "openai")) {
     const body = buildOpenAIRequest(provider, "prompt", [
       { data: "one", mime: "image/jpeg" },
@@ -55,10 +64,20 @@ test("OpenAI-compatible requests use JSON mode and preserve every image in order
     assert.equal(body.max_tokens, MAX_PROVIDER_OUTPUT_TOKENS);
     assert.equal(body.stream, false);
     assert.equal(body.messages[0].content.length, 3);
-    assert.equal(body.messages[0].content[0].text, "prompt");
-    assert.equal(body.messages[0].content[1].image_url.url, "data:image/jpeg;base64,one");
-    assert.equal(body.messages[0].content[2].image_url.url, "data:image/png;base64,two");
-    if (provider.name === "Groq") assert.equal(body.reasoning_effort, "none");
+    if (provider.name === "DeepInfra") {
+      assert.equal(body.messages[0].content[0].image_url.url, "data:image/jpeg;base64,one");
+      assert.equal(body.messages[0].content[1].image_url.url, "data:image/png;base64,two");
+      assert.equal(body.messages[0].content[2].text, "prompt");
+      assert.equal(body.temperature, 1);
+      assert.equal(body.top_p, 0.95);
+      assert.equal(body.top_k, 64);
+    } else {
+      assert.equal(body.messages[0].content[0].text, "prompt");
+      assert.equal(body.messages[0].content[1].image_url.url, "data:image/jpeg;base64,one");
+      assert.equal(body.messages[0].content[2].image_url.url, "data:image/png;base64,two");
+      assert.equal(body.reasoning_effort, "none");
+      assert.equal(body.temperature, 0.2);
+    }
   }
 });
 
@@ -73,7 +92,7 @@ test("provider requests accept stage-specific output limits", () => {
   for (const provider of PROVIDER_DEFINITIONS.filter(item => item.kind === "openai")) {
     assert.equal(buildOpenAIRequest(provider, "prompt", [], 4_000).max_tokens, 4_000);
   }
-  assert.equal(PROVIDER_TIMEOUT_MS, 180_000);
+  assert.equal(PROVIDER_TIMEOUT_MS, 35_000);
 });
 
 test("Gemini parser combines text parts and detects empty, error, and truncated envelopes", () => {
@@ -111,9 +130,11 @@ test("every provider adapter sends the expected authenticated request and return
       assert.match(captured.url, /key=Gemini-secret$/);
       assert.equal(captured.body.contents[0].parts[1].inline_data.data, "page");
       assert.equal(captured.body.generationConfig.responseMimeType, "application/json");
+      assert.deepEqual(captured.body.generationConfig.thinkingConfig, { thinkingBudget: 0 });
     } else {
       assert.equal(captured.options.headers.Authorization, `Bearer ${definition.name}-secret`);
-      assert.equal(captured.body.messages[0].content[1].image_url.url, "data:image/webp;base64,page");
+      const image = captured.body.messages[0].content.find(part => part.type === "image_url");
+      assert.equal(image.image_url.url, "data:image/webp;base64,page");
     }
   }
 });
