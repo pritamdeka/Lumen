@@ -28,13 +28,13 @@ const en = {
   heroBody: "Upload a lab report or prescription. Lumen explains every value and prepares questions for your doctor.",
   neverStored: "Never stored", languages: "languages", notDiagnosis: "Not a diagnosis — a translation", language: "Language",
   explain: "Explain my report", drop: "Drop your report here", uploadHint: "Lab report, prescription, or discharge summary · JPG or PNG · up to 5 pages",
-  findings: "Your numbers", meaning: "What this means", questions: "Ask your doctor", lifestyle: "General wellbeing notes",
+  findings: "Your results", meaning: "What this means", questions: "Ask your doctor", lifestyle: "General wellbeing notes",
   copyQuestions: "Copy questions", savePdf: "Save as PDF", changeLanguage: "Change language", newReport: "New report",
   recentReports: "Recent reports", clearHistory: "Clear history", noReports: "No saved reports yet.",
   disclaimerTitle: "Lumen is not a doctor.", disclaimerBody: "It explains medical documents to support conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician. Images are sent to the selected AI provider for analysis and are not stored on our servers.",
-  reading: "Reading your report…", translating: "Translating…", copied: "✓ Copied", invalidFiles: "Please upload JPG or PNG images.",
+  reading: "Reading your report…", translating: "Translating…", copied: "✓ Copied", invalidFiles: "Upload a JPG or PNG image.",
   uploadFirst: "Upload a report first.", tooManyPages: "You can upload up to 5 pages.", payloadTooLarge: "The pages are too large. Remove a page or use clearer, smaller images.",
-  remove: "Remove", page: "Page", reference: "ref", report: "Report", normal: "normal", low: "low", high: "high", borderline: "borderline", critical: "critical"
+  remove: "Remove", page: "Page", reference: "range", report: "Report", normal: "normal", low: "low", high: "high", borderline: "borderline", critical: "critical"
 };
 
 const translations = {

@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lumen",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/dev-server.js"
+      ],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

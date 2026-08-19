@@ -7,17 +7,17 @@ Adjudicator: `google/gemma-4-31B-it`
 
 | Locale | Language | Method | Date | Corrections | Status | Catalog SHA-256 |
 |---|---|---|---|---:|---|---|
-| `en` | English | project-baseline | 2026-07-20 | 0 | approved | `58b5a613f4c3…` |
+| `en` | English | project-baseline | 2026-08-19 | 0 | approved | `a4cd4b683df2…` |
 | `hi` | हिन्दी | deepinfra-dual-model | 2026-07-24 | 41 | approved | `16fad56a6d57…` |
 | `bn` | বাংলা | deepinfra-dual-model | 2026-07-24 | 36 | approved | `606492ee6a6d…` |
-| `as` | অসমীয়া | deepinfra-dual-model | 2026-07-24 | 36 | approved | `d309dcb68040…` |
+| `as` | অসমীয়া | deepinfra-dual-model + human-correction | 2026-08-19 | 37 | approved | `8f4468fff479…` |
 | `ta` | தமிழ் | deepinfra-dual-model | 2026-07-24 | 32 | approved | `06d606adb10a…` |
 | `te` | తెలుగు | deepinfra-dual-model | 2026-07-25 | 39 | approved | `b8ead34fbd4b…` |
-| `mr` | मराठी | deepinfra-dual-model | 2026-07-25 | 42 | approved | `a3f2d4674ec6…` |
+| `mr` | मराठी | deepinfra-dual-model + human-correction | 2026-08-19 | 43 | approved | `b3e0ea83bd5e…` |
 | `kn` | ಕನ್ನಡ | deepinfra-dual-model | 2026-07-25 | 37 | approved | `aa19c5f89d2a…` |
 | `gu` | ગુજરાતી | deepinfra-dual-model | 2026-07-25 | 33 | approved | `066f3399eac6…` |
 | `ml` | മലയാളം | deepinfra-dual-model | 2026-07-24 | 35 | approved | `e3f1ac30e3ac…` |
-| `pa` | ਪੰਜਾਬੀ | deepinfra-dual-model | 2026-07-25 | 36 | approved | `654143fba7e1…` |
+| `pa` | ਪੰਜਾਬੀ | deepinfra-dual-model + human-correction | 2026-08-19 | 37 | approved | `e3d9c24fe0d6…` |
 | `or` | ଓଡ଼ିଆ | deepinfra-dual-model | 2026-07-25 | 48 | approved | `9cc4c989f755…` |
 | `ur` | اردو | deepinfra-dual-model | 2026-07-25 | 27 | approved | `52ee2dbd095b…` |
 | `es` | Español | deepinfra-dual-model | 2026-07-25 | 75 | approved | `72ea37e0c7a3…` |
@@ -35,3 +35,10 @@ Automated release checks cover:
 - Accessibility-label intent and concise mobile-friendly wording.
 
 A catalog edit changes its checksum and immediately removes that locale from production until this review is run again.
+
+## Hand corrections
+
+Rows marked `+ human-correction` carry a later hand edit on top of the model review, with the checksum re-stamped so the locale stays in production. Recorded corrections:
+
+- 2026-08-19 — `en`: "Your numbers" became "Your results" (every other locale already said results); the file-type error stopped pleading ("Please upload JPG or PNG images." → "Upload a JPG or PNG image."); and the range label stopped using the lab abbreviation `ref` in a product whose purpose is removing lab jargon.
+- 2026-08-19 — `as`, `mr`, `pa`: the drop-zone label used a verb that also reads as "throw away" or "abandon" (`পেলাওক`, `टाका`, `ਛੱਡੋ`). Replaced with a plain "place here" verb (`ৰাখক`, `ठेवा`, `ਰੱਖੋ`). Assamese was reported by a native speaker; Marathi and Punjabi were changed for the same connotation and are worth a native-speaker check.

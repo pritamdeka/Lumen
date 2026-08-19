@@ -7,8 +7,8 @@ export const TRANSLATION_REVIEWS = {
       "Project baseline"
     ],
     "adjudicator": null,
-    "reviewedAt": "2026-07-20T00:00:00.000Z",
-    "catalogHash": "58b5a613f4c37d7d15dac36d0c5b763fd60ce98870ac8bea89d3d17d1c416784",
+    "reviewedAt": "2026-08-19T00:00:00.000Z",
+    "catalogHash": "a4cd4b683df2752b67b7e01021d36d3aefc887ae335306d5f8ed531b3b952697",
     "corrections": 0
   },
   "hi": {
@@ -37,15 +37,15 @@ export const TRANSLATION_REVIEWS = {
   },
   "as": {
     "status": "approved",
-    "method": "deepinfra-dual-model",
+    "method": "deepinfra-dual-model + human-correction",
     "reviewers": [
       "google/gemma-4-26B-A4B-it",
       "Qwen/Qwen3.6-35B-A3B"
     ],
     "adjudicator": "google/gemma-4-31B-it",
-    "reviewedAt": "2026-07-24T18:43:36.172Z",
-    "catalogHash": "d309dcb68040ede49f0c6b15f8683da8d9ea7079c8403d7d5e48cfd6da3d2676",
-    "corrections": 36
+    "reviewedAt": "2026-08-19T00:00:00.000Z",
+    "catalogHash": "8f4468fff4790ac628fa3e81d74678dde939256a1c2c579387d135416d22d5c2",
+    "corrections": 37
   },
   "ta": {
     "status": "approved",
@@ -85,15 +85,15 @@ export const TRANSLATION_REVIEWS = {
   },
   "mr": {
     "status": "approved",
-    "method": "deepinfra-dual-model",
+    "method": "deepinfra-dual-model + human-correction",
     "reviewers": [
       "google/gemma-4-26B-A4B-it",
       "Qwen/Qwen3.6-35B-A3B"
     ],
     "adjudicator": "google/gemma-4-31B-it",
-    "reviewedAt": "2026-07-25T07:59:36.150Z",
-    "catalogHash": "a3f2d4674ec67a8465eddacf4744a55c19ceddae6214c23c3dc58500ba8de1ff",
-    "corrections": 42
+    "reviewedAt": "2026-08-19T00:00:00.000Z",
+    "catalogHash": "b3e0ea83bd5e5f352b553b763ef2bbe265796c88a52a6c345d92085433ce0ec6",
+    "corrections": 43
   },
   "ml": {
     "status": "approved",
@@ -121,15 +121,15 @@ export const TRANSLATION_REVIEWS = {
   },
   "pa": {
     "status": "approved",
-    "method": "deepinfra-dual-model",
+    "method": "deepinfra-dual-model + human-correction",
     "reviewers": [
       "google/gemma-4-26B-A4B-it",
       "Qwen/Qwen3.6-35B-A3B"
     ],
     "adjudicator": "google/gemma-4-31B-it",
-    "reviewedAt": "2026-07-25T08:10:56.699Z",
-    "catalogHash": "654143fba7e1aac6df87c68e26c33b937ed34724854ca01e83a3a07d6155038c",
-    "corrections": 36
+    "reviewedAt": "2026-08-19T00:00:00.000Z",
+    "catalogHash": "e3d9c24fe0d6bb7ef08725b36dca8e890b027ffe4cbd8ac9530bbe523c2bf31c",
+    "corrections": 37
   },
   "ur": {
     "status": "approved",

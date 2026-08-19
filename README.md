@@ -122,9 +122,15 @@ Opening `index.html` directly as a file will not work—the browser must use the
 
 | Provider | URL | Free tier |
 |---|---|---|
-| Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | 1,500 req/day, no card |
-| Groq | [console.groq.com/keys](https://console.groq.com/keys) | Yes, generous |
+| Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Free tier is **20 requests/day** for `gemini-2.5-flash` |
+| Groq | [console.groq.com/keys](https://console.groq.com/keys) | Free, but only 8,000 tokens/minute |
 | DeepInfra | [deepinfra.com/dash/api_keys](https://deepinfra.com/dash/api_keys) | Pay-as-you-go, very cheap |
+
+Check your real quota at [ai.dev/rate-limit](https://ai.dev/rate-limit) before relying on it. On the free tier a single
+analysis spends two Gemini requests, so **20 requests/day is roughly ten reports per day for the whole deployment** —
+enough for development, not for a public launch. Enabling billing on the Google Cloud project moves the key to the paid
+tier and lifts the cap. Once the Gemini quota is spent, every request falls through to DeepInfra and Groq: reports still
+complete, but end-to-end latency roughly doubles.
 
 ---
 

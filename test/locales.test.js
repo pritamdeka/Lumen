@@ -42,7 +42,9 @@ test("the immediate beta exposes all 18 approved locale catalogs", () => {
     if (locale.code === "en") {
       assert.equal(locale.review.method, "project-baseline");
     } else {
-      assert.equal(locale.review.method, "deepinfra-dual-model");
+      // A locale may carry a later hand correction on top of the model review;
+      // the model provenance must still be recorded.
+      assert.match(locale.review.method, /^deepinfra-dual-model( \+ human-correction)?$/);
       assert.deepEqual(locale.review.reviewers, [
         "google/gemma-4-26B-A4B-it",
         "Qwen/Qwen3.6-35B-A3B"
