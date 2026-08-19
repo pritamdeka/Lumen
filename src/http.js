@@ -50,16 +50,28 @@ export function validateAnalysisResponse(data, stage) {
   return data;
 }
 
-export async function postAnalysis(fetchImplementation, url, payload) {
+// The serverless function is capped at 120s, so give up slightly after that
+// instead of leaving the user in front of a spinner with no outcome.
+export const CLIENT_TIMEOUT_MS = 125_000;
+
+export async function postAnalysis(fetchImplementation, url, payload, options = {}) {
+  const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+    ? options.timeoutMs
+    : CLIENT_TIMEOUT_MS;
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
   let response;
   try {
     response = await fetchImplementation(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      ...(controller ? { signal: controller.signal } : {})
     });
   } catch {
-    throw new ApiResponseError("network_error");
+    throw new ApiResponseError(controller?.signal.aborted ? "analysis_timeout" : "network_error");
+  } finally {
+    if (timer) clearTimeout(timer);
   }
   const data = await parseJsonResponse(response);
   return validateAnalysisResponse(data, payload?.stage);

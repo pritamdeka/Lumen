@@ -1,10 +1,11 @@
 import { buildExtractionPrompt, buildPrompt, parseExtraction, parseModelObject, parseReport, runProviderFallback } from "../api/analyze.js";
 import { getConfiguredProviders } from "../api/providers.js";
 
-// A transparent 1x1 PNG verifies the multimodal route without sending report data.
+// A blank 2x2 PNG verifies the multimodal route without sending report data.
+// Some providers reject 1x1 images outright, which would mask real failures.
 const SAFE_TEST_IMAGE = {
   mime: "image/png",
-  data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+  data: "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAADklEQVR4nGP4DwYMEAoAU7oL9ZisIGcAAAAASUVORK5CYII="
 };
 
 const providers = getConfiguredProviders();

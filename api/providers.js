@@ -7,7 +7,10 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     envKey: "GEMINI_API_KEY",
     kind: "gemini",
     model: "gemini-2.5-flash",
-    timeoutMs: 15_000,
+    // Gemini is by far the fastest OCR route measured against real report pages,
+    // so it also serves the extraction stage when its key is configured.
+    extractionModel: "gemini-2.5-flash",
+    timeoutMs: 40_000,
     endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
   }),
   Object.freeze({
@@ -16,7 +19,10 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     kind: "openai",
     endpoint: "https://api.groq.com/openai/v1/chat/completions",
     model: "qwen/qwen3.6-27b",
-    timeoutMs: 12_000,
+    timeoutMs: 20_000,
+    // Groq rejects the whole request when prompt plus max_tokens exceeds the
+    // account tokens-per-minute allowance, so cap what we ever ask it for.
+    outputTokenCap: 2_400,
     extraBody: Object.freeze({ reasoning_effort: "none" })
   }),
   Object.freeze({
@@ -24,9 +30,9 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     envKey: "DEEPINFRA_API_KEY",
     kind: "openai",
     endpoint: "https://api.deepinfra.com/v1/openai/chat/completions",
-    model: "google/gemma-4-26B-A4B-it",
-    extractionModel: "Qwen/Qwen3-VL-8B-Instruct",
-    explanationModel: "Qwen/Qwen3.6-35B-A3B",
+    model: "Qwen/Qwen3.5-35B-A3B",
+    extractionModel: "Qwen/Qwen3-VL-30B-A3B-Instruct",
+    explanationModel: "Qwen/Qwen3.5-27B",
     timeoutMs: 50_000,
     imageFirst: true,
     sampling: Object.freeze({ temperature: 0.2, top_p: 0.95, top_k: 64 }),
@@ -129,9 +135,12 @@ export function getProviderStatus(environment = process.env) {
 
 export async function callProvider(provider, prompt, images, fetchImplementation = globalThis.fetch, options = {}) {
   if (typeof fetchImplementation !== "function") throw providerError(provider.name, "transport is unavailable");
-  const maxOutputTokens = Number.isInteger(options.maxOutputTokens)
-    ? Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(1, options.maxOutputTokens))
+  const outputCap = Number.isInteger(provider.outputTokenCap) && provider.outputTokenCap > 0
+    ? Math.min(MAX_PROVIDER_OUTPUT_TOKENS, provider.outputTokenCap)
     : MAX_PROVIDER_OUTPUT_TOKENS;
+  const maxOutputTokens = Number.isInteger(options.maxOutputTokens)
+    ? Math.min(outputCap, Math.max(1, options.maxOutputTokens))
+    : outputCap;
   if (provider.kind === "gemini") {
     const response = await fetchImplementation(`${provider.endpoint}?key=${encodeURIComponent(provider.key)}`, {
       method: "POST",
@@ -147,7 +156,7 @@ export async function callProvider(provider, prompt, images, fetchImplementation
         generationConfig: {
           temperature: 0.2,
           maxOutputTokens,
-          responseMimeType: "application/json",
+          ...(provider.jsonMode === false ? {} : { responseMimeType: "application/json" }),
           thinkingConfig: { thinkingBudget: 0 }
         }
       })

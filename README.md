@@ -37,13 +37,18 @@ lumen-app/
 
 **Key handling:** API keys live in Vercel environment variables and are read only inside the serverless function. They are never sent to the browser and never appear in client source. Users don't need their own keys.
 
-**Provider routing** — DeepInfra uses smaller stage-specific models; Gemini and Groq remain generic fallbacks when DeepInfra is not configured or OCR fails:
+**Provider routing** — both stages try the fastest capable provider first and fall back in order. Extraction uses a compact line-based OCR prompt rather than the full JSON schema, which is what makes it fast:
 
-| Order | Provider | Model | Notes |
-|---|---|---|---|
-| 1 | Google Gemini | `gemini-2.5-flash` | Native structured JSON |
-| 2 | Groq | `qwen/qwen3.6-27b` | Vision and JSON object mode |
-| 3 | DeepInfra | `Qwen/Qwen3-VL-8B-Instruct` → `Qwen/Qwen3.6-35B-A3B` | Privacy-minimized OCR, then bounded parallel explanation batches |
+| Stage | Order | Provider | Model | Notes |
+|---|---|---|---|---|
+| Extract | 1 | Google Gemini | `gemini-2.5-flash` | Line-based OCR, ~3 s per page |
+| Extract | 2 | DeepInfra | `Qwen/Qwen3-VL-30B-A3B-Instruct` | Privacy-minimized OCR, pages in parallel |
+| Extract | 3 | Groq / DeepInfra | generic model | Full JSON extraction schema |
+| Explain | 1 | Google Gemini | `gemini-2.5-flash` | Complete report in ~20 s |
+| Explain | 2 | Groq | `qwen/qwen3.6-27b` | JSON object mode |
+| Explain | 3 | DeepInfra | `Qwen/Qwen3.5-35B-A3B` | Complete report |
+| Explain | 4 | DeepInfra | `Qwen/Qwen3.5-27B` | Bounded parallel batches; per-finding statuses only |
+| Explain | 5 | — | none | Neutral "not interpreted" report, values preserved |
 
 Configure at least one provider key. Providers whose keys are absent are skipped, so Gemini is optional when another provider is configured.
 
@@ -101,7 +106,9 @@ For an explicitly authorized local report fixture, run `npm run test:report:loca
 
 Analysis uses two stages: the first extracts every visible value and assigns a stable ID; the second explains those IDs. The extraction remains authoritative, so omitted or reordered explanation items cannot hide reported values.
 
-Analysis functions have a 120-second ceiling. DeepInfra OCR processes uploaded pages concurrently, excludes identity fields from its requested transcription, and uses a 1,200-token per-page limit. Explanations are split into parallel batches of at most 12 findings, with original values merged back by stable ID. Generic fallback attempts retain a 55-second internal deadline. Gemini thinking and DeepInfra/Qwen reasoning are disabled for these structured workflows.
+Analysis functions have a 120-second ceiling and the browser aborts a stalled request at 125 seconds, so a stuck provider always surfaces as an error rather than an endless spinner. OCR processes uploaded pages concurrently, excludes identity fields from its requested transcription, and uses a 1,200-token per-page limit. Batched explanations are split into parallel groups of at most 12 findings, with original values merged back by stable ID. Generic fallback attempts share an 80-second internal deadline. Output budgets are sized from page and finding counts — an undersized budget makes a provider truncate mid-JSON, which is indistinguishable from an outage. Groq requests are additionally capped to stay inside its per-minute token allowance, which rejects oversized requests outright. Gemini thinking and DeepInfra/Qwen reasoning are disabled for these structured workflows.
+
+A typical single-page report completes in about 25 seconds end to end: ~3 s to extract and ~20 s to explain.
 
 If extraction succeeds but explanation times out, Lumen keeps every extracted value visible in a neutral “not interpreted” state. The user can retry the explanation without uploading or extracting the report again.
 

@@ -16,7 +16,7 @@ import {
 const EXPECTED_MODELS = {
   Gemini: "gemini-2.5-flash",
   Groq: "qwen/qwen3.6-27b",
-  DeepInfra: "google/gemma-4-26B-A4B-it"
+  DeepInfra: "Qwen/Qwen3.5-35B-A3B"
 };
 
 function response(json, overrides = {}) {
@@ -46,9 +46,9 @@ test("configured providers preserve fallback order and ignore blank keys", () =>
 test("provider diagnostics expose model and configuration state without credentials", () => {
   const status = getProviderStatus({ GEMINI_API_KEY: "secret", GROQ_API_KEY: "  " });
   assert.deepEqual(status, [
-    { name: "Gemini", model: "gemini-2.5-flash", timeoutMs: 15_000, configured: true },
-    { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 12_000, configured: false },
-    { name: "DeepInfra", model: "google/gemma-4-26B-A4B-it", extractionModel: "Qwen/Qwen3-VL-8B-Instruct", explanationModel: "Qwen/Qwen3.6-35B-A3B", timeoutMs: 50_000, configured: false }
+    { name: "Gemini", model: "gemini-2.5-flash", extractionModel: "gemini-2.5-flash", timeoutMs: 40_000, configured: true },
+    { name: "Groq", model: "qwen/qwen3.6-27b", timeoutMs: 20_000, configured: false },
+    { name: "DeepInfra", model: "Qwen/Qwen3.5-35B-A3B", extractionModel: "Qwen/Qwen3-VL-30B-A3B-Instruct", explanationModel: "Qwen/Qwen3.5-27B", timeoutMs: 50_000, configured: false }
   ]);
   assert.doesNotMatch(JSON.stringify(status), /secret|envKey|endpoint/);
 });

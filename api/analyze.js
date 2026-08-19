@@ -7,7 +7,7 @@ export const config = { maxDuration: 120 };
 export const MAX_PAGES = 5;
 export const MAX_IMAGE_DATA_CHARS = 4_000_000;
 export const MAX_FINDINGS = 250;
-export const ANALYSIS_DEADLINE_MS = 55_000;
+export const ANALYSIS_DEADLINE_MS = 80_000;
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const HITS = new Map();
@@ -335,11 +335,14 @@ function sendError(res, status, code, message) {
 
 export function outputTokenLimit(input) {
   if (input.stage === "explain") {
+    // Every finding carries an id, a localized name, a short meaning and a
+    // sentence, on top of the narrative sections, so budget generously: a short
+    // ceiling silently truncates the model and looks like a provider outage.
     const findings = input.extraction?.findings?.length || 0;
-    return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(3_000, 2_000 + findings * 40));
+    return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(4_000, 4_000 + findings * 110));
   }
   const pages = Math.max(1, Math.min(MAX_PAGES, input.images?.length || 1));
-  return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, 4_000 + pages * 2_400);
+  return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, 8_000 + pages * 4_000);
 }
 
 export function providerAttemptTimeout(remainingMs, remainingProviders) {
@@ -355,7 +358,7 @@ export function providerFailureResponse(error) {
   return { status: 502, code: "providers_failed", message: "The analysis service is temporarily unavailable. Please try again." };
 }
 
-export async function extractWithDeepInfraOcr(provider, images, options = {}) {
+export async function extractWithOcr(provider, images, options = {}) {
   if (!provider?.extractionModel || !Array.isArray(images) || !images.length) {
     const error = new Error("OCR extraction is unavailable");
     error.code = "invalid_extraction";
@@ -366,7 +369,9 @@ export async function extractWithDeepInfraOcr(provider, images, options = {}) {
     ...provider,
     model: provider.extractionModel,
     jsonMode: false,
-    extraBody: { ...(provider.extraBody || {}), reasoning_effort: "none", service_tier: "priority" }
+    ...(provider.kind === "gemini" ? {} : {
+      extraBody: { ...(provider.extraBody || {}), reasoning_effort: "none", service_tier: "priority" }
+    })
   };
   const pages = await Promise.all(images.map((image, index) => call(
     ocrProvider,
@@ -382,6 +387,8 @@ export async function extractWithDeepInfraOcr(provider, images, options = {}) {
   }
   return normalizeExtraction({ isMedical: true, reportType: "Medical report", findings });
 }
+
+export const extractWithDeepInfraOcr = extractWithOcr;
 
 function buildFindingBatchPrompt(localeCode, findings) {
   const locale = getLocale(localeCode);
@@ -422,6 +429,7 @@ export async function explainWithDeepInfraBatches(provider, extraction, localeCo
     jsonMode: true,
     extraBody: { ...(provider.extraBody || {}), reasoning_effort: "none", service_tier: "priority" }
   };
+  if (provider.kind === "gemini") delete explanationProvider.extraBody.service_tier;
   const batches = [];
   for (let index = 0; index < extraction.findings.length; index += batchSize) batches.push(extraction.findings.slice(index, index + batchSize));
   const explainedBatches = await Promise.all(batches.map(async batch => {
@@ -570,35 +578,26 @@ export default async function handler(req, res) {
   }
 
   if (input.stage === "extract") {
-    const ocrProvider = providers.find(provider => provider.extractionModel);
-    if (ocrProvider) {
+    // Line-based OCR is far cheaper and faster than asking for the full JSON
+    // schema, so every OCR-capable provider is tried before the generic route.
+    const ocrProviders = providers.filter(provider => provider.extractionModel);
+    let ocrError = null;
+    for (const ocrProvider of ocrProviders) {
       try {
-        const extraction = await extractWithDeepInfraOcr(ocrProvider, input.images);
+        const extraction = await extractWithOcr(ocrProvider, input.images);
         res.status(200).json({ extraction, provider: `${ocrProvider.name} OCR` });
         return;
-      } catch (ocrError) {
-        const fallbackProviders = providers.filter(provider => provider !== ocrProvider);
-        if (!fallbackProviders.length) {
-          const failure = providerFailureResponse(ocrError);
-          sendError(res, failure.status, failure.code, failure.message);
-          return;
-        }
-        providers.splice(0, providers.length, ...fallbackProviders);
+      } catch (error) {
+        ocrError = error;
       }
     }
-  }
-
-  if (input.stage === "explain") {
-    const explanationProvider = providers.find(provider => provider.explanationModel);
-    if (explanationProvider) {
-      try {
-        const report = await explainWithDeepInfraBatches(explanationProvider, input.extraction, input.localeCode);
-        res.status(200).json({ report, provider: `${explanationProvider.name} Qwen` });
-      } catch {
-        res.status(200).json({ report: neutralExplanationReport(input.extraction, input.localeCode), provider: "Local fallback" });
-      }
+    const fallbackProviders = providers.filter(provider => !provider.extractionModel);
+    if (ocrProviders.length && !fallbackProviders.length) {
+      const failure = providerFailureResponse(ocrError);
+      sendError(res, failure.status, failure.code, failure.message);
       return;
     }
+    if (fallbackProviders.length) providers.splice(0, providers.length, ...fallbackProviders);
   }
 
   try {
@@ -617,8 +616,26 @@ export default async function handler(req, res) {
       }
     });
     res.status(200).json(result);
+    return;
   } catch (error) {
-    const failure = providerFailureResponse(error);
-    sendError(res, failure.status, failure.code, failure.message);
+    if (input.stage !== "explain") {
+      const failure = providerFailureResponse(error);
+      sendError(res, failure.status, failure.code, failure.message);
+      return;
+    }
   }
+
+  // The full narrative failed. Batched per-finding explanations still give every
+  // value a plain-language status, so try that before the neutral fallback.
+  const explanationProvider = providers.find(provider => provider.explanationModel);
+  if (explanationProvider) {
+    try {
+      const report = await explainWithDeepInfraBatches(explanationProvider, input.extraction, input.localeCode);
+      res.status(200).json({ report, provider: `${explanationProvider.name} ${explanationProvider.explanationModel}` });
+      return;
+    } catch {
+      // Fall through to the neutral report below.
+    }
+  }
+  res.status(200).json({ report: neutralExplanationReport(input.extraction, input.localeCode), provider: "Local fallback" });
 }
