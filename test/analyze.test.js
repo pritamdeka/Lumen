@@ -499,10 +499,10 @@ test("handler completes extraction and explanation with each provider configured
       const explanationResponse = mockResponse();
       await handler({ method: "POST", headers: { "x-forwarded-for": `only-${providerName}-explain` }, body: { stage: "explain", locale: "en", extraction: extractionResponse.body.extraction } }, explanationResponse);
       assert.equal(explanationResponse.statusCode, 200, `${providerName} explanation`);
-      assert.equal(explanationResponse.body.provider, providerName);
+      assert.match(explanationResponse.body.provider, new RegExp(`^${providerName} .+`), `${providerName} explanation provider label`);
       assert.equal(explanationResponse.body.report.totalFindings, 1);
       assert.equal(explanationResponse.body.report.findings[0].value, "12.5");
-      assert.equal(callNumber, 2);
+      assert.equal(callNumber, 3, `${providerName} spends one extraction, one batch and one narrative call`);
     }
   } finally {
     global.fetch = oldFetch;

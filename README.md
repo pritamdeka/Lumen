@@ -37,18 +37,29 @@ spasht-app/
 
 **Key handling:** API keys live in Vercel environment variables and are read only inside the serverless function. They are never sent to the browser and never appear in client source. Users don't need their own keys.
 
-**Provider routing** — both stages try the fastest capable provider first and fall back in order. Extraction uses a compact line-based OCR prompt rather than the full JSON schema, which is what makes it fast:
+**Provider routing** — both stages try the fastest capable provider first and fall back in order.
+
+Extraction uses a compact line-based OCR prompt rather than the full JSON schema. Explanation is **staged**: per-finding
+batches and one small narrative call run concurrently, so no single request has to carry the narrative *and* every
+finding. A single combined call overruns both the time budget and the output budget once a report is long or the
+target language is not Latin — that is what used to leave non-English reports with statuses but no summary.
 
 | Stage | Order | Provider | Model | Notes |
 |---|---|---|---|---|
 | Extract | 1 | Google Gemini | `gemini-2.5-flash` | Line-based OCR, ~3 s per page |
 | Extract | 2 | DeepInfra | `Qwen/Qwen3-VL-30B-A3B-Instruct` | Privacy-minimized OCR, pages in parallel |
 | Extract | 3 | Groq / DeepInfra | generic model | Full JSON extraction schema |
-| Explain | 1 | Google Gemini | `gemini-2.5-flash` | Complete report in ~20 s |
-| Explain | 2 | Groq | `qwen/qwen3.6-27b` | JSON object mode |
-| Explain | 3 | DeepInfra | `Qwen/Qwen3.5-35B-A3B` | Complete report |
-| Explain | 4 | DeepInfra | `Qwen/Qwen3.5-27B` | Bounded parallel batches; per-finding statuses only |
-| Explain | 5 | — | none | Neutral "not interpreted" report, values preserved |
+| Explain | 1 | any configured | staged batches + narrative | Complete report; the normal path |
+| Explain | 2 | any configured | single combined call | Legacy route, kept as a safety net |
+| Explain | 3 | — | none | Neutral "not interpreted" report, values preserved |
+
+Output budgets scale with the target script: Indic scripts spend roughly 1.8x the tokens of Latin for the same
+sentence and Nastaliq about 2.2x, so a budget sized for English truncates every other language. Providers with a hard
+per-request token cap are skipped for the staged pass on long reports rather than being allowed to burn the time
+budget ahead of a provider that can finish.
+
+If a provider produces the per-finding batches but not the narrative, that partial report is held while the remaining
+providers are tried, and only returned if none of them can produce a complete one.
 
 Configure at least one provider key. Providers whose keys are absent are skipped, so Gemini is optional when another provider is configured.
 

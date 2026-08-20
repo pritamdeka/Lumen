@@ -1,6 +1,7 @@
 import { getLocale, hasExpectedScript, isProductionLocale, localeFromLegacyPrompt, translate } from "../src/locales.js";
 import { MEDICAL_OCR_PROMPT, parseMedicalOcr } from "../src/ocr.js";
 import { buildExplanationTimeoutReport } from "../src/report-fallback.js";
+import { rangePosition } from "../src/report-tools.js";
 import { callProviderWithTimeout, getConfiguredProviders, getProviderStatus, MAX_PROVIDER_OUTPUT_TOKENS, PROVIDER_TIMEOUT_MS } from "./providers.js";
 
 export const config = { maxDuration: 120 };
@@ -333,13 +334,24 @@ function sendError(res, status, code, message) {
   res.status(status).json({ code, error: message });
 }
 
+export function scriptTokenFactor(localeCode) {
+  const script = getLocale(localeCode).script;
+  if (script === "Latin") return 1;
+  return script === "Arabic" ? 2.2 : 1.8;
+}
+
+export function narrativeTokenLimit(localeCode) {
+  return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.round(1_800 * scriptTokenFactor(localeCode)));
+}
+
 export function outputTokenLimit(input) {
   if (input.stage === "explain") {
     // Every finding carries an id, a localized name, a short meaning and a
     // sentence, on top of the narrative sections, so budget generously: a short
     // ceiling silently truncates the model and looks like a provider outage.
     const findings = input.extraction?.findings?.length || 0;
-    return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.max(4_000, 4_000 + findings * 110));
+    const factor = scriptTokenFactor(input.localeCode || "en");
+    return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, Math.round(Math.max(4_000, 4_000 + findings * 110) * factor));
   }
   const pages = Math.max(1, Math.min(MAX_PAGES, input.images?.length || 1));
   return Math.min(MAX_PROVIDER_OUTPUT_TOKENS, 8_000 + pages * 4_000);
@@ -419,23 +431,123 @@ ${JSON.stringify(findings.map(finding => ({
 </extracted-findings>`;
 }
 
+export function buildNarrativePrompt(localeCode, reportType, counts, notable) {
+  const locale = getLocale(localeCode);
+  return `Write the plain-language summary of a medical report in ${locale.prompt}, using the ${locale.script} writing system.
+Return one JSON object only, with exactly these keys:
+{
+ "outputLocale": "${locale.code}",
+ "overall": "ok" | "attention" | "urgent",
+ "headline": "one warm sentence (max 18 words)",
+ "subline": "one sentence (max 20 words)",
+ "reportType": "document type in the requested language",
+ "meaning": ["2-4 short paragraphs"],
+ "questions": ["4-6 questions referencing the actual values below"],
+ "lifestyle": ["2-4 gentle general wellbeing suggestions; never medication advice"],
+ "glossary": [{"term":"medical term used above","definition":"short plain definition"}],
+ "urgencyTitle": "short follow-up heading",
+ "urgencyNote": "1-2 non-alarmist follow-up sentences"
+}
+Do NOT return a findings array; the individual values are already explained elsewhere.
+You are translating, not diagnosing. Never diagnose a condition, never suggest medication changes, and never invent a value that is not listed. Say what a value MAY relate to and that a clinician must interpret it. If any value looks critically abnormal set overall to "urgent" and advise prompt medical contact.
+All narrative text must use the requested language and script; Latin digits and medical abbreviations are allowed. Set outputLocale to exactly "${locale.code}".
+
+This report is a ${JSON.stringify(reportType || "medical report")}. It contains ${counts.total} reported values: ${counts.normal} inside their printed range, ${counts.attention} outside it, ${counts.critical} markedly outside it.
+The values worth writing about:
+${JSON.stringify(notable)}`;
+}
+
+export function narrativeContext(extraction) {
+  const findings = extraction?.findings || [];
+  const counts = { total: findings.length, normal: 0, attention: 0, critical: 0 };
+  const outside = [];
+  for (const finding of findings) {
+    const range = rangePosition(finding);
+    if (!range) continue;
+    if (range.valuePct < range.safeStartPct || range.valuePct > range.safeEndPct) {
+      counts.attention++;
+      outside.push(finding);
+    } else counts.normal++;
+  }
+  // A document with no printed ranges still deserves a summary, so give the model real
+  // values to write about rather than leaving it with counts alone.
+  const material = outside.length >= 6 ? outside : [...outside, ...findings.filter(item => !outside.includes(item))].slice(0, 12);
+  const notable = material.slice(0, 15).map(finding => ({
+    test: finding.test, value: finding.value, unit: finding.unit, refRange: finding.refRange
+  }));
+  return { counts, notable };
+}
+
+export async function explainNarrative(provider, extraction, localeCode, options = {}) {
+  const call = options.call || callProviderWithTimeout;
+  const { counts, notable } = narrativeContext(extraction);
+  const raw = await call(provider, buildNarrativePrompt(localeCode, extraction.reportType, counts, notable), [], {
+    timeoutMs: provider.timeoutMs || PROVIDER_TIMEOUT_MS,
+    maxOutputTokens: narrativeTokenLimit(localeCode)
+  });
+  const parsed = parseModelObject(raw);
+  if (parsed.outputLocale !== localeCode) throw new Error("Wrong narrative locale");
+  const text = [parsed.headline, parsed.subline, parsed.reportType, ...(parsed.meaning || []), ...(parsed.questions || [])].join(" ");
+  if (!hasExpectedScript(text, localeCode)) throw new Error("Wrong narrative script");
+  return {
+    overall: ["ok", "attention", "urgent"].includes(parsed.overall) ? parsed.overall : null,
+    headline: cleanText(parsed.headline, 300),
+    subline: cleanText(parsed.subline, 300),
+    reportType: cleanText(parsed.reportType),
+    meaning: Array.isArray(parsed.meaning) ? parsed.meaning.slice(0, 6).map(item => cleanText(item, 700)).filter(Boolean) : [],
+    questions: Array.isArray(parsed.questions) ? parsed.questions.slice(0, 8).map(item => cleanText(item, 400)).filter(Boolean) : [],
+    lifestyle: Array.isArray(parsed.lifestyle) ? parsed.lifestyle.slice(0, 6).map(item => cleanText(item, 400)).filter(Boolean) : [],
+    glossary: Array.isArray(parsed.glossary) ? parsed.glossary.slice(0, 20).map(item => ({ term: cleanText(item?.term), definition: cleanText(item?.definition, 500) })).filter(item => item.term && item.definition) : [],
+    urgencyTitle: cleanText(parsed.urgencyTitle, 200),
+    urgencyNote: cleanText(parsed.urgencyNote, 600)
+  };
+}
+
+// Runs tasks with a ceiling on how many are in flight. Providers with a per-minute token
+// allowance reject the whole request when too many batches land at once.
+async function runBounded(items, limit, worker) {
+  if (!Number.isInteger(limit) || limit <= 0 || limit >= items.length) return Promise.all(items.map(worker));
+  const results = new Array(items.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: limit }, async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await worker(items[index], index);
+    }
+  }));
+  return results;
+}
+
+// A provider with a hard per-request token allowance can serve a short report but will
+// reject or truncate its way through a long one, burning the budget for the providers
+// behind it. Skip it in the staged pass rather than spending that time.
+export function stagedExplanationFits(provider, extraction, batchSize = 12) {
+  if (!Number.isInteger(provider?.outputTokenCap)) return true;
+  return Math.ceil((extraction?.findings?.length || 0) / batchSize) <= 2;
+}
+
 export async function explainWithDeepInfraBatches(provider, extraction, localeCode, options = {}) {
-  if (!provider?.explanationModel || !Array.isArray(extraction?.findings)) throw new Error("Batched explanation is unavailable");
+  const explanationModel = provider?.explanationModel || provider?.model;
+  if (!explanationModel || !Array.isArray(extraction?.findings)) throw new Error("Batched explanation is unavailable");
   const call = options.call || callProviderWithTimeout;
   const batchSize = options.batchSize || 12;
   const explanationProvider = {
     ...provider,
-    model: provider.explanationModel,
+    model: explanationModel,
     jsonMode: true,
     extraBody: { ...(provider.extraBody || {}), reasoning_effort: "none", service_tier: "priority" }
   };
-  if (provider.kind === "gemini") delete explanationProvider.extraBody.service_tier;
+  // service_tier is a DeepInfra extension; Groq rejects it and Gemini ignores the body entirely.
+  if (provider.kind !== "openai" || !provider.endpoint?.includes("deepinfra")) delete explanationProvider.extraBody.service_tier;
   const batches = [];
   for (let index = 0; index < extraction.findings.length; index += batchSize) batches.push(extraction.findings.slice(index, index + batchSize));
-  const explainedBatches = await Promise.all(batches.map(async batch => {
+  const storyPromise = options.narrative === false
+    ? Promise.resolve(null)
+    : explainNarrative(explanationProvider, extraction, localeCode, options).catch(() => null);
+  const explainedBatches = await runBounded(batches, provider.maxParallelCalls, async batch => {
     const raw = await call(explanationProvider, buildFindingBatchPrompt(localeCode, batch), [], {
       timeoutMs: provider.timeoutMs || PROVIDER_TIMEOUT_MS,
-      maxOutputTokens: Math.max(800, Math.min(1_600, 300 + batch.length * 90))
+      maxOutputTokens: Math.round(Math.max(800, Math.min(1_600, 300 + batch.length * 90)) * scriptTokenFactor(localeCode))
     });
     const parsed = parseModelObject(raw);
     if (parsed.outputLocale !== localeCode || !Array.isArray(parsed.findings)) throw new Error("Invalid explanation batch");
@@ -455,27 +567,31 @@ export async function explainWithDeepInfraBatches(provider, extraction, localeCo
         explain: cleanText(finding.explain, 500)
       };
     });
-  }));
+  });
   const findings = explainedBatches.flat();
   const narrative = findings.flatMap(finding => [finding.test, finding.meaningShort, finding.explain]).join(" ");
   if (!hasExpectedScript(narrative, localeCode)) throw new Error("Wrong output script");
   const overall = findings.some(finding => finding.status === "critical")
     ? "urgent"
     : findings.some(finding => finding.status !== "normal") ? "attention" : "ok";
+  // A report without the narrative is degraded but still useful; the flag lets the caller
+  // prefer a provider that manages both, without paying for the batches twice.
+  const story = await storyPromise;
   return attachExtractionMetadata({
     outputLocale: localeCode,
     isMedical: extraction.isMedical !== false,
-    overall,
-    headline: translate(localeCode, "report"),
-    subline: `${findings.length} ${translate(localeCode, "findings")}`,
-    reportType: translate(localeCode, "report"),
+    narrativeMissing: !story,
+    overall: story?.overall || overall,
+    headline: story?.headline || translate(localeCode, "report"),
+    subline: story?.subline || `${findings.length} ${translate(localeCode, "findings")}`,
+    reportType: story?.reportType || translate(localeCode, "report"),
     findings,
-    meaning: [],
-    questions: [],
-    lifestyle: [],
-    glossary: [],
-    urgencyTitle: translate(localeCode, "disclaimerTitle"),
-    urgencyNote: translate(localeCode, "disclaimerBody")
+    meaning: story?.meaning || [],
+    questions: story?.questions || [],
+    lifestyle: story?.lifestyle || [],
+    glossary: story?.glossary || [],
+    urgencyTitle: story?.urgencyTitle || translate(localeCode, "disclaimerTitle"),
+    urgencyNote: story?.urgencyNote || translate(localeCode, "disclaimerBody")
   }, extraction);
 }
 
@@ -600,6 +716,33 @@ export default async function handler(req, res) {
     if (fallbackProviders.length) providers.splice(0, providers.length, ...fallbackProviders);
   }
 
+  if (input.stage === "explain") {
+    // Staged explanation first: bounded per-finding batches plus one small narrative call.
+    // A single request carrying the narrative AND every finding overruns both the time
+    // budget and the output budget once a report is large or the language is not Latin.
+    const staged = providers.filter(provider => stagedExplanationFits(provider, input.extraction));
+    let degraded = null;
+    for (const provider of staged) {
+      try {
+        const report = await explainWithDeepInfraBatches(provider, input.extraction, input.localeCode);
+        const label = `${provider.name} ${provider.explanationModel || provider.model}`;
+        if (!report.narrativeMissing) {
+          res.status(200).json({ report, provider: label });
+          return;
+        }
+        // Hold it and let the next provider try for a complete report; the batches
+        // are already paid for, so this costs nothing if nobody does better.
+        degraded = degraded || { report, provider: label };
+      } catch {
+        // Try the next provider, then the single-call route below.
+      }
+    }
+    if (degraded) {
+      res.status(200).json(degraded);
+      return;
+    }
+  }
+
   try {
     const result = await runProviderFallback(providers, {
       prompt,
@@ -622,19 +765,6 @@ export default async function handler(req, res) {
       const failure = providerFailureResponse(error);
       sendError(res, failure.status, failure.code, failure.message);
       return;
-    }
-  }
-
-  // The full narrative failed. Batched per-finding explanations still give every
-  // value a plain-language status, so try that before the neutral fallback.
-  const explanationProvider = providers.find(provider => provider.explanationModel);
-  if (explanationProvider) {
-    try {
-      const report = await explainWithDeepInfraBatches(explanationProvider, input.extraction, input.localeCode);
-      res.status(200).json({ report, provider: `${explanationProvider.name} ${explanationProvider.explanationModel}` });
-      return;
-    } catch {
-      // Fall through to the neutral report below.
     }
   }
   res.status(200).json({ report: neutralExplanationReport(input.extraction, input.localeCode), provider: "Local fallback" });

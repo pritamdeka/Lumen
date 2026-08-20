@@ -23,6 +23,8 @@ export const PROVIDER_DEFINITIONS = Object.freeze([
     // Groq rejects the whole request when prompt plus max_tokens exceeds the
     // account tokens-per-minute allowance, so cap what we ever ask it for.
     outputTokenCap: 2_400,
+    // The free tier's per-minute token allowance rejects a burst of parallel batches.
+    maxParallelCalls: 1,
     extraBody: Object.freeze({ reasoning_effort: "none" })
   }),
   Object.freeze({

@@ -212,7 +212,8 @@
   .summary-bar span{min-width:0}
   .summary-bar .normal{background:var(--green)}.summary-bar .attention{background:var(--amber)}.summary-bar .critical{background:var(--red)}
   /* panel map — every value with a printed range, plotted against it, furthest-out first */
-  .panel-map{direction:ltr;display:flex;flex-direction:column;gap:1px;margin-top:18px;max-height:330px;overflow-y:auto}
+  .pm-title{font-family:var(--font-d);font-size:.82rem;font-weight:700;letter-spacing:.02em;color:var(--ink-soft);margin-top:22px}
+  .panel-map{direction:ltr;display:flex;flex-direction:column;gap:1px;margin-top:10px;max-height:330px;overflow-y:auto}
   .pm-row{display:grid;grid-template-columns:minmax(0,1fr) 160px minmax(0,92px);gap:14px;align-items:center;background:none;border:0;border-radius:6px;padding:8px;font:inherit;color:inherit;cursor:pointer;text-align:start;width:100%}
   .pm-row:hover{background:var(--surface-2)}
   .pm-name{font-size:.81rem;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -756,8 +757,9 @@ function createPanelMap(findings){
       :range.valuePct>range.safeEndPct?range.valuePct-range.safeEndPct:0;
     rows.push({finding,range,deviation,group:statusGroup(finding.status)});
   });
-  if(rows.length<3)return null;
+  if(!rows.length)return null;
   rows.sort((a,b)=>b.deviation-a.deviation);
+  const heading=document.createElement("h4");heading.className="pm-title";heading.textContent=t("rangePosition");
   const wrap=document.createElement("div");wrap.className="panel-map";
   rows.forEach(({finding,range,group})=>{
     const row=document.createElement("button");row.type="button";row.className="pm-row";
@@ -780,7 +782,7 @@ function createPanelMap(findings){
     const item=document.createElement("span");const swatch=document.createElement("i");swatch.className=key;
     const text=document.createElement("span");text.textContent=label;item.append(swatch,text);legend.appendChild(item);
   });
-  const box=document.createElement("div");box.append(wrap,legend);return box;
+  const box=document.createElement("div");box.append(heading,wrap,legend);return box;
 }
 function createRangeViz(finding){
   const range=rangePosition(finding);if(!range)return null;
