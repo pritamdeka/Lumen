@@ -33,11 +33,11 @@ test("frontend requires processing consent and links every beta trust page", asy
   assert.match(html, /id="processingDialog"/);
   assert.match(html, /if\(!await ensureProcessingConsent\(\)\)/);
   assert.match(html, /async function analyse\(\)[\s\S]*?ensureProcessingConsent\(\)[\s\S]*?prepareImages\(\)/);
-  assert.match(html, /localStorage\.removeItem\("lumen_processing_consent"\)/);
+  assert.match(html, /localStorage\.removeItem\("spasht_processing_consent"\)/);
   for (const page of ["privacy.html", "terms.html", "medical-disclaimer.html", "contact.html"]) {
     assert.match(html, new RegExp(page.replace(".", "\\.")));
     const content = await readFile(new URL(`../${page}`, import.meta.url), "utf8");
-    assert.match(content, /KhyontekAI|Lumen/);
+    assert.match(content, /KhyontekAI|Spasht/);
     assert.match(content, /noindex,nofollow,noarchive/);
   }
   const privacy = await readFile(new URL("../privacy.html", import.meta.url), "utf8");
@@ -82,7 +82,7 @@ test("frontend includes visit toolkit accessibility fallbacks", async () => {
   assert.match(html, /className="data-table"/);
   assert.match(html, /fetch\("\/api\/speech"/);
   assert.match(html, /id="audioProgress"/);
-  assert.match(html, /lumen_speech_consent/);
+  assert.match(html, /spasht_speech_consent/);
   assert.match(html, /id="expandAllBtn"/);
   assert.match(html, /id="attentionJump"/);
 });

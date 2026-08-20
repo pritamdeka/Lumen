@@ -8,7 +8,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": null,
     "reviewedAt": "2026-08-19T00:00:00.000Z",
-    "catalogHash": "a4cd4b683df2752b67b7e01021d36d3aefc887ae335306d5f8ed531b3b952697",
+    "catalogHash": "1b079fd6882aa40a5535e4fea713917f07ca15e3b12c4000aa32d6b5e09bcaa3",
     "corrections": 0
   },
   "hi": {
@@ -20,7 +20,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-24T16:53:18.836Z",
-    "catalogHash": "16fad56a6d57f154853e18078557d604b511661460b9f789a754bb83fe1e97e2",
+    "catalogHash": "db4fa4d8a7bc5dec0c8b258baaaf1142743942cff3ba761b508efbe4baad7f7e",
     "corrections": 41
   },
   "bn": {
@@ -32,7 +32,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-24T17:27:47.583Z",
-    "catalogHash": "606492ee6a6d54ea97a3fcb4cce37e34457893d83a7ae721dcc87ee7abf1320e",
+    "catalogHash": "32e57e1d743c76a2e15a623a8ab69f3c4dc9615016b7bc341969c1de8519bad5",
     "corrections": 36
   },
   "as": {
@@ -44,7 +44,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-08-19T00:00:00.000Z",
-    "catalogHash": "8f4468fff4790ac628fa3e81d74678dde939256a1c2c579387d135416d22d5c2",
+    "catalogHash": "e40402820b13ff3cbea9d55dbdaf54c373662c98d721be1b0021a298ee6a71f1",
     "corrections": 37
   },
   "ta": {
@@ -56,7 +56,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-24T20:53:11.298Z",
-    "catalogHash": "06d606adb10a2851479e586001663d78cff942e95f05abf5f0c430ca9c7f2f19",
+    "catalogHash": "726c04a705232b354cb7218ff6d87ca88e10e1f20e4f68f7eabee0627fc79412",
     "corrections": 32
   },
   "te": {
@@ -68,7 +68,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:00:22.314Z",
-    "catalogHash": "b8ead34fbd4be78048a77c4eccfa84f31c7215fa5dfc4b6b4efc99dba293e5ce",
+    "catalogHash": "5d32b4bd59515827db070589705fed911d99fee46691e53e5b27815e7fb9d979",
     "corrections": 39
   },
   "kn": {
@@ -80,7 +80,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:04:32.655Z",
-    "catalogHash": "aa19c5f89d2a9b6c3ed637f8192cd51a188156e9461abc5067f8781faa59a279",
+    "catalogHash": "8d2daa7b04a7cf5613ec0335b790189c133fb74fc4134ff5ee3e18105e295205",
     "corrections": 37
   },
   "mr": {
@@ -92,7 +92,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-08-19T00:00:00.000Z",
-    "catalogHash": "b3e0ea83bd5e5f352b553b763ef2bbe265796c88a52a6c345d92085433ce0ec6",
+    "catalogHash": "d49c987635b441ef49a8734a8250ee52338ad33c18b1ed5d208d5f19f73b5819",
     "corrections": 43
   },
   "ml": {
@@ -104,7 +104,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-24T20:00:37.963Z",
-    "catalogHash": "e3f1ac30e3ac2f9fd6261117444bcb359549d0526ed3e021672658be1d2c2b75",
+    "catalogHash": "7438745ef439512f91ff8cd8058a171897618b755a39fb647ab8b624d3eaffb8",
     "corrections": 35
   },
   "gu": {
@@ -116,7 +116,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:05:57.749Z",
-    "catalogHash": "066f3399eac69a8c4d53d0333bdeafd9100d029fc405115b71eb1353ed946ca4",
+    "catalogHash": "733fe3ccdbcf11f5dd541117d4993ed0a96f4a63170fbd8ab364c4f283851506",
     "corrections": 33
   },
   "pa": {
@@ -128,7 +128,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-08-19T00:00:00.000Z",
-    "catalogHash": "e3d9c24fe0d6bb7ef08725b36dca8e890b027ffe4cbd8ac9530bbe523c2bf31c",
+    "catalogHash": "94acb2a5fdb9349672d7e17fd136af923491d5cee4b54eb2742b3f62dff48318",
     "corrections": 37
   },
   "ur": {
@@ -140,7 +140,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:20:05.785Z",
-    "catalogHash": "52ee2dbd095b0f90282e6d9ec915f99ed44b4ec284c1bb5e917920adeaa9cba8",
+    "catalogHash": "54c8665d2d0ca047f7b45e4b8b6a662377a5b4e72a3d846c65b061538dc8e9b8",
     "corrections": 27
   },
   "or": {
@@ -152,7 +152,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:16:08.633Z",
-    "catalogHash": "9cc4c989f75554e0ef76b8777a68f640896db78ad6f5460b243c4dcaba8b42ec",
+    "catalogHash": "4bcab5028939133ce79cec5f2f8a1371b7853897c2cd9d2869a68e8335beefb1",
     "corrections": 48
   },
   "fr": {
@@ -164,7 +164,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:30:15.971Z",
-    "catalogHash": "e96c1e7ba7c97c63fb84ebd1d84ac89a371333191dd7c1cbdaec60a6fa23e300",
+    "catalogHash": "c0b597531cb23f2351c13187076f8f738c37e70816bcf228c4d8039cdf3d825d",
     "corrections": 71
   },
   "es": {
@@ -176,7 +176,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T08:25:19.454Z",
-    "catalogHash": "72ea37e0c7a357ff36ac55ac60935d0784a0ccd5956c6ff6021008e6ca4b9c92",
+    "catalogHash": "4cb478836c4fceaaa5e39dded043e747ab4f2fd9e47e5738c944c4d31e8770f1",
     "corrections": 75
   },
   "de": {
@@ -188,7 +188,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T09:57:48.758Z",
-    "catalogHash": "97f698536eeeeb84111b4f552c9df5f0b55e1315e72a40986964a2209070739d",
+    "catalogHash": "daca59517c272f89500b0436b7a952d42cdb485c6ea0953daa42663e86072432",
     "corrections": 73
   },
   "it": {
@@ -200,7 +200,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T10:06:50.930Z",
-    "catalogHash": "3271b8d623d877371e36312e5a49322c46895065e4ab57181856f61840fd1c42",
+    "catalogHash": "e3816ee694ce2f4eb5bc675424a68ff4cc2b1f6cd0d06ac175c6a4bcc5bef961",
     "corrections": 72
   },
   "pt-PT": {
@@ -212,7 +212,7 @@ export const TRANSLATION_REVIEWS = {
     ],
     "adjudicator": "google/gemma-4-31B-it",
     "reviewedAt": "2026-07-25T10:13:41.239Z",
-    "catalogHash": "bb8fefc017608c646bdb2826cbeebc420912f80d5632f6ffd224d6f25f4af9c9",
+    "catalogHash": "578fdea9c9367e88cea1646fe5bddf2c766e5882d27c0873f572a4ca4695baf7",
     "corrections": 74
   }
 };

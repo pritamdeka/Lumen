@@ -27,7 +27,7 @@ function json(response, value, status = 200) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host}`);
   if (url.pathname === "/api/analyze" && request.method === "POST") {
-    if (String(request.headers.cookie || "").includes("lumen_fixture_error=plain")) {
+    if (String(request.headers.cookie || "").includes("spasht_fixture_error=plain")) {
       response.writeHead(502, { "Content-Type": "text/plain; charset=utf-8" });
       response.end("An error occurred while processing the request");
       return;
@@ -36,7 +36,7 @@ const server = http.createServer(async (request, response) => {
     for await (const chunk of request) body += chunk;
     const input = JSON.parse(body || "{}");
     if (input.stage === "extract") return json(response, { extraction, provider: "Fixture" });
-    if (String(request.headers.cookie || "").includes("lumen_fixture_error=timeout-explain")) {
+    if (String(request.headers.cookie || "").includes("spasht_fixture_error=timeout-explain")) {
       return json(response, { code: "analysis_timeout", error: "The analysis provider took too long. Please try again." }, 504);
     }
     const narrative = SCRIPT_FIXTURES[input.locale] || SCRIPT_FIXTURES.en;
@@ -58,9 +58,9 @@ const server = http.createServer(async (request, response) => {
         html = html.replace("</script>", `\nlastExtraction=${JSON.stringify(extraction)};currentAnalysisId="fixture-report";requestExplanation(lastExtraction);\n</script>`);
       }
       const headers = { "Content-Type": mimeTypes[".html"] };
-      if (url.searchParams.get("error") === "plain") headers["Set-Cookie"] = "lumen_fixture_error=plain; Path=/; SameSite=Lax";
-      else if (url.searchParams.get("error") === "timeout-explain") headers["Set-Cookie"] = "lumen_fixture_error=timeout-explain; Path=/; SameSite=Lax";
-      else headers["Set-Cookie"] = "lumen_fixture_error=; Path=/; Max-Age=0; SameSite=Lax";
+      if (url.searchParams.get("error") === "plain") headers["Set-Cookie"] = "spasht_fixture_error=plain; Path=/; SameSite=Lax";
+      else if (url.searchParams.get("error") === "timeout-explain") headers["Set-Cookie"] = "spasht_fixture_error=timeout-explain; Path=/; SameSite=Lax";
+      else headers["Set-Cookie"] = "spasht_fixture_error=; Path=/; Max-Age=0; SameSite=Lax";
       response.writeHead(200, headers);
       response.end(html);
       return;
@@ -77,4 +77,4 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(port, "127.0.0.1", () => console.log(`Lumen preview fixture: http://localhost:${port}/?demo=1`));
+server.listen(port, "127.0.0.1", () => console.log(`Spasht preview fixture: http://localhost:${port}/?demo=1`));

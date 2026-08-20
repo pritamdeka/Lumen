@@ -7,24 +7,24 @@ Adjudicator: `google/gemma-4-31B-it`
 
 | Locale | Language | Method | Date | Corrections | Status | Catalog SHA-256 |
 |---|---|---|---|---:|---|---|
-| `en` | English | project-baseline | 2026-08-19 | 0 | approved | `a4cd4b683df2…` |
-| `hi` | हिन्दी | deepinfra-dual-model | 2026-07-24 | 41 | approved | `16fad56a6d57…` |
-| `bn` | বাংলা | deepinfra-dual-model | 2026-07-24 | 36 | approved | `606492ee6a6d…` |
-| `as` | অসমীয়া | deepinfra-dual-model + human-correction | 2026-08-19 | 37 | approved | `8f4468fff479…` |
-| `ta` | தமிழ் | deepinfra-dual-model | 2026-07-24 | 32 | approved | `06d606adb10a…` |
-| `te` | తెలుగు | deepinfra-dual-model | 2026-07-25 | 39 | approved | `b8ead34fbd4b…` |
-| `mr` | मराठी | deepinfra-dual-model + human-correction | 2026-08-19 | 43 | approved | `b3e0ea83bd5e…` |
-| `kn` | ಕನ್ನಡ | deepinfra-dual-model | 2026-07-25 | 37 | approved | `aa19c5f89d2a…` |
-| `gu` | ગુજરાતી | deepinfra-dual-model | 2026-07-25 | 33 | approved | `066f3399eac6…` |
-| `ml` | മലയാളം | deepinfra-dual-model | 2026-07-24 | 35 | approved | `e3f1ac30e3ac…` |
-| `pa` | ਪੰਜਾਬੀ | deepinfra-dual-model + human-correction | 2026-08-19 | 37 | approved | `e3d9c24fe0d6…` |
-| `or` | ଓଡ଼ିଆ | deepinfra-dual-model | 2026-07-25 | 48 | approved | `9cc4c989f755…` |
-| `ur` | اردو | deepinfra-dual-model | 2026-07-25 | 27 | approved | `52ee2dbd095b…` |
-| `es` | Español | deepinfra-dual-model | 2026-07-25 | 75 | approved | `72ea37e0c7a3…` |
-| `fr` | Français | deepinfra-dual-model | 2026-07-25 | 71 | approved | `e96c1e7ba7c9…` |
-| `de` | Deutsch | deepinfra-dual-model | 2026-07-25 | 73 | approved | `97f698536eee…` |
-| `it` | Italiano | deepinfra-dual-model | 2026-07-25 | 72 | approved | `3271b8d623d8…` |
-| `pt-PT` | Português | deepinfra-dual-model | 2026-07-25 | 74 | approved | `bb8fefc01760…` |
+| `en` | English | project-baseline | 2026-08-19 | 0 | approved | `1b079fd6882a…` |
+| `hi` | हिन्दी | deepinfra-dual-model | 2026-07-24 | 41 | approved | `db4fa4d8a7bc…` |
+| `bn` | বাংলা | deepinfra-dual-model | 2026-07-24 | 36 | approved | `32e57e1d743c…` |
+| `as` | অসমীয়া | deepinfra-dual-model + human-correction | 2026-08-19 | 37 | approved | `e40402820b13…` |
+| `ta` | தமிழ் | deepinfra-dual-model | 2026-07-24 | 32 | approved | `726c04a70523…` |
+| `te` | తెలుగు | deepinfra-dual-model | 2026-07-25 | 39 | approved | `5d32b4bd5951…` |
+| `mr` | मराठी | deepinfra-dual-model + human-correction | 2026-08-19 | 43 | approved | `d49c987635b4…` |
+| `kn` | ಕನ್ನಡ | deepinfra-dual-model | 2026-07-25 | 37 | approved | `8d2daa7b04a7…` |
+| `gu` | ગુજરાતી | deepinfra-dual-model | 2026-07-25 | 33 | approved | `733fe3ccdbcf…` |
+| `ml` | മലയാളം | deepinfra-dual-model | 2026-07-24 | 35 | approved | `7438745ef439…` |
+| `pa` | ਪੰਜਾਬੀ | deepinfra-dual-model + human-correction | 2026-08-19 | 37 | approved | `94acb2a5fdb9…` |
+| `or` | ଓଡ଼ିଆ | deepinfra-dual-model | 2026-07-25 | 48 | approved | `4bcab5028939…` |
+| `ur` | اردو | deepinfra-dual-model | 2026-07-25 | 27 | approved | `54c8665d2d0c…` |
+| `es` | Español | deepinfra-dual-model | 2026-07-25 | 75 | approved | `4cb478836c4f…` |
+| `fr` | Français | deepinfra-dual-model | 2026-07-25 | 71 | approved | `c0b597531cb2…` |
+| `de` | Deutsch | deepinfra-dual-model | 2026-07-25 | 73 | approved | `daca59517c27…` |
+| `it` | Italiano | deepinfra-dual-model | 2026-07-25 | 72 | approved | `e3816ee694ce…` |
+| `pt-PT` | Português | deepinfra-dual-model | 2026-07-25 | 74 | approved | `578fdea9c936…` |
 
 Automated release checks cover:
 
@@ -35,6 +35,12 @@ Automated release checks cover:
 - Accessibility-label intent and concise mobile-friendly wording.
 
 A catalog edit changes its checksum and immediately removes that locale from production until this review is run again.
+
+## Renames
+
+- 2026-08-20 — the product was renamed from Lumen to Spasht. The brand name appears inside translated
+  sentences in every catalog, so all 18 checksums were re-stamped. No wording was re-reviewed and the
+  reviewer records are unchanged: this was a proper-noun substitution, not a retranslation.
 
 ## Hand corrections
 

@@ -57,7 +57,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/ssml+xml",
         "Ocp-Apim-Subscription-Key": key,
         "X-Microsoft-OutputFormat": "audio-24khz-48kbitrate-mono-mp3",
-        "User-Agent": "Lumen"
+        "User-Agent": "Spasht"
       },
       body: buildSsml(input)
     });

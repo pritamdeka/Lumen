@@ -1,10 +1,10 @@
-# Lumen
+# Spasht
 
 **Your medical report, finally in plain words.**
 
-Upload a photo of a lab report, prescription, or discharge summary. Lumen explains every value in plain language, flags what needs attention, and prepares questions to ask your doctor in 18 supported languages.
+Upload a photo of a lab report, prescription, or discharge summary. Spasht explains every value in plain language, flags what needs attention, and prepares questions to ask your doctor in 18 supported languages.
 
-Lumen translates. It does not diagnose.
+Spasht translates. It does not diagnose.
 
 ---
 
@@ -26,7 +26,7 @@ Lumen translates. It does not diagnose.
 ## Architecture
 
 ```
-lumen-app/
+spasht-app/
 ├── index.html        # Frontend — single file, no build step
 ├── api/
 │   └── analyze.js    # Vercel serverless function; holds the API keys
@@ -77,7 +77,7 @@ Configure at least one provider key. Providers whose keys are absent are skipped
 
 ```bash
 npm i -g vercel
-cd lumen-app
+cd spasht-app
 vercel                      # link the project
 vercel env add GEMINI_API_KEY
 vercel env add GROQ_API_KEY          # optional
@@ -110,7 +110,7 @@ Analysis functions have a 120-second ceiling and the browser aborts a stalled re
 
 A typical single-page report completes in about 25 seconds end to end: ~3 s to extract and ~20 s to explain.
 
-If extraction succeeds but explanation times out, Lumen keeps every extracted value visible in a neutral “not interpreted” state. The user can retry the explanation without uploading or extracting the report again.
+If extraction succeeds but explanation times out, Spasht keeps every extracted value visible in a neutral “not interpreted” state. The user can retry the explanation without uploading or extracting the report again.
 
 `GET /api/analyze` returns a credential-free diagnostic showing the configured provider names, model IDs, and timeout budgets. It never calls a provider or exposes a key.
 
@@ -168,4 +168,4 @@ The UI reinforces this with a persistent disclaimer and framing throughout ("not
 
 ## Disclaimer
 
-Lumen is not a medical device and does not provide medical advice. It is an accessibility tool that translates medical documents into plain language. Always consult a qualified clinician about your results.
+Spasht is not a medical device and does not provide medical advice. It is an accessibility tool that translates medical documents into plain language. Always consult a qualified clinician about your results.

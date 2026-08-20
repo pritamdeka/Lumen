@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-Lumen is a build-free Vercel application. `index.html` contains the browser UI, including styles, localization, uploads, report rendering, history, and themes. `api/analyze.js` is the Node.js serverless endpoint that validates requests and calls configured AI providers in fallback order. `vercel.json` defines security headers, while `.env.example` documents provider keys. Keep `README.md` aligned with behavior changes.
+Spasht is a build-free Vercel application. `index.html` contains the browser UI, including styles, localization, uploads, report rendering, history, and themes. `api/analyze.js` is the Node.js serverless endpoint that validates requests and calls configured AI providers in fallback order. `vercel.json` defines security headers, while `.env.example` documents provider keys. Keep `README.md` aligned with behavior changes.
 
 ## Build, Test, and Development Commands
 

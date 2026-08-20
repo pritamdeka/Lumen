@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "lumen",
+      "name": "spasht",
       "runtimeExecutable": "node",
       "runtimeArgs": [
         "scripts/dev-server.js"

@@ -81,19 +81,19 @@ export function normalizeReviewItems(payload, expectedKeys, { unresolvedMissingC
 
 export function buildReviewerPrompt(locale, entries) {
   if (entries.length === 1) {
-    return `Review one Lumen interface translation into ${locale.prompt} (${locale.script}, ${locale.dir}).
+    return `Review one Spasht interface translation into ${locale.prompt} (${locale.script}, ${locale.dir}).
 Require exact meaning, natural wording, medical neutrality, preserved placeholders, and unchanged safety strength. Return pass, fix with a complete replacement, or block.
 Interface strings:
 ${JSON.stringify([{ key: "item", english: entries[0].source, current: entries[0].translation }])}`;
   }
   if (entries.length <= 3) {
-    return `Review these English-to-${locale.prompt} Lumen interface translations in ${locale.script} script (${locale.dir}).
+    return `Review these English-to-${locale.prompt} Spasht interface translations in ${locale.script} script (${locale.dir}).
 Require natural grammar, exact meaning, medical neutrality, preserved placeholders, accessible labels, and unchanged safety/disclaimer strength. Do not diagnose or add advice.
 Return one JSON item per supplied key using verdict "pass", "fix", or "block". A "fix" requires the complete replacement in "correction"; otherwise use "block". Keep "issues" brief.
 Interface strings:
 ${JSON.stringify(entries)}`;
   }
-  return `You are independently reviewing interface translations for Lumen, an informational medical-document explanation app.
+  return `You are independently reviewing interface translations for Spasht, an informational medical-document explanation app.
 Review from ${entries[0]?.source ? "English" : "the source language"} into ${locale.prompt}. Use the ${locale.script} writing system and ${locale.dir} direction.
 Check natural grammar, preserved meaning, calm medical neutrality, accessibility labels, disclaimers, status terminology, punctuation, placeholders, and absence of unintended English. Product names, file types, medical abbreviations, numbers, and units may remain Latin.
 Do not diagnose, add medical claims, weaken safety language, or discuss anything outside the supplied interface strings.
@@ -114,7 +114,7 @@ export function buildAdjudicatorPrompt(locale, entries) {
         reviewerB: { verdict: entry.reviewerB.verdict, candidate: entry.reviewerB.correction }
       }))
     : entries;
-  return `You are the final translation adjudicator for Lumen, an informational medical-document explanation app.
+  return `You are the final translation adjudicator for Spasht, an informational medical-document explanation app.
 Choose or produce the safest, most natural ${locale.prompt} translation for every supplied item. Preserve the English meaning, placeholders, medical neutrality, accessibility intent, and all disclaimers. Do not diagnose or add treatment advice.
 Return exactly one JSON object:
 {"items":[{"key":"exact key","verdict":"pass|fix|block","correction":"final complete translation or empty string","issues":["short reason"]}]}

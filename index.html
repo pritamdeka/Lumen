@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lumen — Your medical report, explained</title>
+<title>Spasht — Your medical report, explained</title>
 <meta name="description" content="Upload a lab report and get a plain-language explanation in your language. Not a diagnosis — a translation.">
 <meta name="theme-color" content="#3E1F3A">
 <meta name="robots" content="noindex,nofollow,noarchive">
@@ -76,15 +76,6 @@
   .hero h1{font-family:var(--font-d);font-size:clamp(2.2rem,6.2vw,3.9rem);font-weight:700;letter-spacing:-.04em;line-height:1.02;max-width:16ch;text-wrap:pretty}
   .hero h1 em{font-style:normal;color:var(--gold);display:block}
   body.lang-indic .hero h1,body.lang-ur .hero h1{font-weight:600;letter-spacing:normal;line-height:1.24}
-  /* the script wall: the same promise, in the languages this product actually speaks */
-  .scriptwall{display:flex;flex-direction:column;gap:1px;margin-top:6px;pointer-events:none;overflow:hidden}
-  .scriptwall span{font-size:clamp(1.15rem,3.1vw,1.85rem);line-height:1.3;color:var(--cream);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;opacity:0;animation:wallIn .7s ease forwards}
-  .scriptwall span:nth-child(1){opacity:.62;animation-delay:.10s}
-  .scriptwall span:nth-child(2){opacity:.44;animation-delay:.20s}
-  .scriptwall span:nth-child(3){opacity:.30;animation-delay:.30s}
-  .scriptwall span:nth-child(4){opacity:.20;animation-delay:.40s}
-  .scriptwall span:nth-child(5){opacity:.12;animation-delay:.50s}
-  @keyframes wallIn{from{opacity:0;transform:translateY(6px)}}
   .hero p{color:rgba(250,241,228,.8);max-width:52ch;margin:26px 0 0;font-size:1.03rem}
   .trust{display:flex;gap:22px;flex-wrap:wrap;margin-top:24px;font-family:var(--font-m);font-size:.76rem;color:rgba(250,241,228,.62)}
   .trust span{display:flex;align-items:center;gap:7px}
@@ -220,6 +211,21 @@
   .summary-bar{height:10px;border-radius:999px;overflow:hidden;display:flex;background:var(--line-soft);margin:10px 0}
   .summary-bar span{min-width:0}
   .summary-bar .normal{background:var(--green)}.summary-bar .attention{background:var(--amber)}.summary-bar .critical{background:var(--red)}
+  /* panel map — every value with a printed range, plotted against it, furthest-out first */
+  .panel-map{direction:ltr;display:flex;flex-direction:column;gap:1px;margin-top:18px;max-height:330px;overflow-y:auto}
+  .pm-row{display:grid;grid-template-columns:minmax(0,1fr) 160px minmax(0,92px);gap:14px;align-items:center;background:none;border:0;border-radius:6px;padding:8px;font:inherit;color:inherit;cursor:pointer;text-align:start;width:100%}
+  .pm-row:hover{background:var(--surface-2)}
+  .pm-name{font-size:.81rem;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .pm-track{height:6px;border-radius:3px;background:var(--line-soft);padding:0 5px}
+  .pm-plot{position:relative;display:block;height:100%}
+  .pm-safe{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--green);opacity:.3}
+  .pm-mark{position:absolute;top:-4px;bottom:-4px;width:2.5px;border-radius:2px}
+  .pm-mark.normal{background:var(--green)}.pm-mark.attention{background:var(--amber)}.pm-mark.critical{background:var(--red)}
+  .pm-val{font-family:var(--font-m);font-size:.78rem;text-align:end;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .pm-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;padding:0 8px;font-family:var(--font-m);font-size:.67rem;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.09em}
+  .pm-legend>span{display:flex;align-items:center;gap:7px}
+  .pm-legend i{width:9px;height:9px;border-radius:2px;display:block;flex:none}
+  .pm-legend i.normal{background:var(--green)}.pm-legend i.attention{background:var(--amber)}.pm-legend i.critical{background:var(--red)}
   /* the signature: the printed range drawn as a real scale, with the value plotted on it */
   .range-viz{direction:ltr;unicode-bidi:isolate;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:9px;padding:12px 14px 6px}
   .range-viz svg{width:100%;height:54px;display:block;overflow:visible}
@@ -262,21 +268,21 @@
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
     html{scroll-behavior:auto}
-    .scriptwall span{opacity:.3}
-    .scriptwall span:nth-child(1){opacity:.62}.scriptwall span:nth-child(2){opacity:.44}.scriptwall span:nth-child(3){opacity:.30}.scriptwall span:nth-child(4){opacity:.20}.scriptwall span:nth-child(5){opacity:.12}
   }
   @media(pointer:coarse){
     .iconbtn{width:44px;height:44px}
     .language-button,.chip,.filterbtn{min-height:44px}
     .thumb button{width:28px;height:28px}
     .glossary-item summary{min-height:48px}
+    .pm-row{min-height:44px}
     .site-footer a,.site-footer button{padding:12px 4px}
   }
   @media(max-width:620px){
     .language-grid{grid-template-columns:1fr}.trust{gap:12px}.summary-list{grid-template-columns:1fr}.toolkit{grid-template-columns:1fr}.verdict{padding:20px}.section{padding:20px}
     .finding{align-items:flex-start;flex-wrap:wrap}.finding .name{flex-basis:60%}
     .report-tabs{display:grid;grid-template-columns:1fr 1fr;overflow:visible}.report-tab{min-width:0}
-    .hero{padding:20px 0 40px}.scriptwall span{font-size:1.05rem}.scriptwall span:nth-child(4),.scriptwall span:nth-child(5){display:none}
+    .hero{padding:20px 0 40px}
+    .pm-row{grid-template-columns:minmax(0,1fr) 84px minmax(0,72px);gap:9px}.pm-name{font-size:.76rem}.panel-map{max-height:290px}
   }
 </style>
 </head>
@@ -285,7 +291,7 @@
   <div class="container">
 
   <nav>
-    <div class="logo"><span class="dot"></span>Lumen</div>
+    <div class="logo"><span class="dot"></span>Spasht</div>
     <div class="navbtns">
       <button class="language-button" id="languageBtn" type="button"><span data-icon="globe"></span><span id="currentLangLabel">English</span></button>
       <button class="iconbtn" id="histBtn" title="History" aria-label="History"><span data-icon="history"></span></button>
@@ -296,8 +302,7 @@
   <section class="hero">
     <span class="eyebrow" id="eyebrow">Private &middot; Free &middot; No sign-up</span>
     <h1 id="heroH1"><span id="heroTitle">Your medical report,</span> <em id="heroEmphasis">finally in plain words.</em></h1>
-    <div class="scriptwall" id="scriptWall" aria-hidden="true"></div>
-    <p id="heroP">Upload a lab report or prescription. Lumen explains every value, flags what needs attention, and prepares the questions for your next doctor visit.</p>
+    <p id="heroP">Upload a lab report or prescription. Spasht explains every value, flags what needs attention, and prepares the questions for your next doctor visit.</p>
     <div class="trust">
       <span><span data-icon="lock"></span><span id="t1">Never stored</span></span>
       <span><span data-icon="globe"></span><span id="t2">18 languages</span></span>
@@ -316,8 +321,8 @@
   </dialog>
 
   <dialog id="processingDialog" aria-labelledby="processingConsentTitle">
-    <h2 id="processingConsentTitle">Before Lumen analyses your report</h2>
-    <p id="processingConsentBody">Your selected report pages and extracted text are sent securely to a configured AI provider to create the explanation. Lumen does not keep the report on its servers. You can withdraw this permission at any time.</p>
+    <h2 id="processingConsentTitle">Before Spasht analyses your report</h2>
+    <p id="processingConsentBody">Your selected report pages and extracted text are sent securely to a configured AI provider to create the explanation. Spasht does not keep the report on its servers. You can withdraw this permission at any time.</p>
     <p><a href="/privacy.html">Read the privacy notice</a></p>
     <div class="consent-actions">
       <button class="consent-decline" id="processingConsentDecline" type="button">Not now</button>
@@ -412,7 +417,7 @@
   </div>
 
   <p class="disclaimer">
-    <b id="disclaimerTitle">Lumen is not a doctor.</b> <span id="disclaimerBody">It explains medical documents to support conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician. Images are sent to the selected AI provider for analysis and are not stored on our servers.</span>
+    <b id="disclaimerTitle">Spasht is not a doctor.</b> <span id="disclaimerBody">It explains medical documents to support conversations with healthcare professionals. It does not diagnose, treat, or replace medical advice. Always consult a qualified clinician. Images are sent to the selected AI provider for analysis and are not stored on our servers.</span>
   </p>
   <footer class="site-footer">
     <span class="beta-label" id="betaLabel">Public beta</span>
@@ -448,7 +453,8 @@ applyIcons();
 
 /* ---------------- languages ---------------- */
 const LANGS=getProductionLocales();
-const storedLang=getLocale(localStorage.getItem("lumen_lang")||DEFAULT_LOCALE).code;
+migrateLegacyStorage();
+const storedLang=getLocale(localStorage.getItem("spasht_lang")||DEFAULT_LOCALE).code;
 let currentLang=LANGS.some(locale=>locale.code===storedLang)?storedLang:DEFAULT_LOCALE;
 function t(key){return translate(currentLang,key);}
 
@@ -472,7 +478,7 @@ async function chooseLanguage(code,closeDialog=false){
 }
 function setLang(code){
   currentLang=getLocale(code).code;
-  try{localStorage.setItem("lumen_lang",currentLang);}catch(e){}
+  try{localStorage.setItem("spasht_lang",currentLang);}catch(e){}
   const L=getLocale(currentLang);
   document.body.classList.toggle("lang-indic",L.script!=="Latin");
   document.body.classList.toggle("lang-ur",currentLang==="ur");
@@ -486,23 +492,17 @@ function openLanguagePicker(){renderLanguageOptions();$("languageDialog").showMo
 $("languageBtn").onclick=openLanguagePicker;
 $("retransBtn").onclick=openLanguagePicker;
 $("closeLanguage").onclick=()=>$("languageDialog").close();
-const WALL_ORDER=["hi","bn","ta","ur","te","gu","pa","ml","kn","or","as","mr","es","fr","de","pt-PT","it","en"];
-function wallFont(locale){
-  if(locale.script==="Arabic")return "'Noto Nastaliq Urdu',var(--font-i)";
-  return locale.script==="Latin"?"var(--font-d)":"var(--font-i)";
-}
-function renderScriptWall(){
-  const wall=$("scriptWall");wall.textContent="";
-  const picks=WALL_ORDER.map(code=>LANGS.find(locale=>locale.code===code))
-    .filter(locale=>locale&&locale.code!==currentLang&&locale.ui.heroEmphasis)
-    .slice(0,5);
-  picks.forEach(locale=>{
-    const line=document.createElement("span");
-    line.textContent=locale.ui.heroEmphasis;
-    line.lang=locale.code;line.dir=locale.dir;
-    line.style.fontFamily=wallFont(locale);
-    wall.appendChild(line);
-  });
+// Storage moved from the lumen_* prefix when the product was renamed; carry a returning
+// beta user's history, language, theme and consent across once, then leave the old keys alone.
+function migrateLegacyStorage(){
+  try{
+    if(localStorage.getItem("spasht_migrated")==="1")return;
+    ["hist","lang","theme","processing_consent","speech_consent"].forEach(name=>{
+      const legacy=localStorage.getItem("lumen_"+name);
+      if(legacy!==null&&localStorage.getItem("spasht_"+name)===null)localStorage.setItem("spasht_"+name,legacy);
+    });
+    localStorage.setItem("spasht_migrated","1");
+  }catch(e){}
 }
 function applyUIStrings(){
   $("go").textContent=t("explain");
@@ -526,7 +526,6 @@ function applyUIStrings(){
   $("heroTitle").textContent=t("heroTitle");
   $("heroEmphasis").textContent=t("heroEmphasis");
   $("heroP").textContent=t("heroBody");
-  renderScriptWall();
   $("t1").textContent=t("neverStored");
   $("t2").textContent=LANGS.length+" "+(LANGS.length===1?t("language").toLocaleLowerCase(currentLang):t("languages"));
   $("t3").textContent=t("notDiagnosis");
@@ -547,14 +546,14 @@ function applyUIStrings(){
 function applyTheme(mode){
   document.documentElement.setAttribute("data-theme",mode);
   $("themeBtn").textContent="";$("themeBtn").appendChild(icon(mode==="dark"?"sun":"moon"));
-  try{localStorage.setItem("lumen_theme",mode);}catch(e){}
+  try{localStorage.setItem("spasht_theme",mode);}catch(e){}
 }
 $("themeBtn").onclick=()=>{
   const cur=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
   applyTheme(cur);
 };
 (function initTheme(){
-  let saved=null; try{saved=localStorage.getItem("lumen_theme");}catch(e){}
+  let saved=null; try{saved=localStorage.getItem("spasht_theme");}catch(e){}
   if(!saved) saved = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark":"light";
   applyTheme(saved);
 })();
@@ -662,12 +661,12 @@ function openProcessingConsent(){
   return new Promise(resolve=>{consentResolver=resolve;});
 }
 function closeProcessingConsent(accepted){
-  try{if(accepted)localStorage.setItem("lumen_processing_consent","accepted");else localStorage.removeItem("lumen_processing_consent");}catch(e){}
+  try{if(accepted)localStorage.setItem("spasht_processing_consent","accepted");else localStorage.removeItem("spasht_processing_consent");}catch(e){}
   if($("processingDialog").open)$("processingDialog").close();
   if(consentResolver){const resolve=consentResolver;consentResolver=null;resolve(accepted);}
 }
 async function ensureProcessingConsent(){
-  try{if(localStorage.getItem("lumen_processing_consent")==="accepted")return true;}catch(e){}
+  try{if(localStorage.getItem("spasht_processing_consent")==="accepted")return true;}catch(e){}
   return openProcessingConsent();
 }
 $("processingConsentAccept").onclick=()=>closeProcessingConsent(true);
@@ -739,6 +738,49 @@ function renderSummary(findings){
   [["normal",t("normal")],["attention",t("attention")],["critical",t("critical")]].forEach(([key,label])=>{const item=document.createElement("div");item.className="summary-item";const strong=document.createElement("strong");strong.textContent=s[key];const span=document.createElement("span");span.textContent=label;item.append(strong,span);list.appendChild(item);});
   const bar=document.createElement("div");bar.className="summary-bar";bar.setAttribute("role","img");bar.setAttribute("aria-label",`${t("normal")}: ${s.normal}; ${t("attention")}: ${s.attention}; ${t("critical")}: ${s.critical}`);
   ["normal","attention","critical"].forEach(key=>{const part=document.createElement("span");part.className=key;part.style.width=(s.total?s[key]/s.total*100:0)+"%";bar.appendChild(part);});box.append(list,bar);
+  const map=createPanelMap(findings);if(map)box.appendChild(map);
+}
+function jumpToFinding(findingId){
+  if(!findingId)return;
+  if(activeFindingFilter!=="all"){activeFindingFilter="all";renderFindingFilters();if(lastReport)renderFindings(lastReport.findings||[]);}
+  activateTab("Results");
+  const target=$("findings").querySelector(`[data-finding-id="${CSS.escape(findingId)}"]`);
+  if(!target)return;
+  target.open=true;target.scrollIntoView({behavior:"smooth",block:"center"});target.querySelector("summary")?.focus();
+}
+function createPanelMap(findings){
+  const rows=[];
+  findings.forEach(finding=>{
+    const range=rangePosition(finding);if(!range)return;
+    const deviation=range.valuePct<range.safeStartPct?range.safeStartPct-range.valuePct
+      :range.valuePct>range.safeEndPct?range.valuePct-range.safeEndPct:0;
+    rows.push({finding,range,deviation,group:statusGroup(finding.status)});
+  });
+  if(rows.length<3)return null;
+  rows.sort((a,b)=>b.deviation-a.deviation);
+  const wrap=document.createElement("div");wrap.className="panel-map";
+  rows.forEach(({finding,range,group})=>{
+    const row=document.createElement("button");row.type="button";row.className="pm-row";
+    row.setAttribute("aria-label",[finding.test,(finding.value||"")+(finding.unit?" "+finding.unit:""),finding.refRange?`${t("reference")}: ${finding.refRange}`:""].filter(Boolean).join(", "));
+    const name=document.createElement("span");name.className="pm-name";name.dir="auto";name.textContent=finding.test||"";
+    const track=document.createElement("span");track.className="pm-track";
+    const plot=document.createElement("span");plot.className="pm-plot";
+    const safe=document.createElement("span");safe.className="pm-safe";
+    safe.style.left=range.safeStartPct+"%";safe.style.width=Math.max(1,range.safeEndPct-range.safeStartPct)+"%";
+    const mark=document.createElement("span");mark.className="pm-mark "+group;
+    mark.style.left=`calc(${range.valuePct}% - 1.25px)`;
+    plot.append(safe,mark);track.appendChild(plot);
+    const val=document.createElement("span");val.className="pm-val";val.textContent=(finding.value||"")+(finding.unit?" "+finding.unit:"");
+    row.append(name,track,val);
+    row.onclick=()=>jumpToFinding(finding.findingId);
+    wrap.appendChild(row);
+  });
+  const legend=document.createElement("div");legend.className="pm-legend";
+  [["normal",t("normal")],["attention",t("attention")],["critical",t("critical")]].forEach(([key,label])=>{
+    const item=document.createElement("span");const swatch=document.createElement("i");swatch.className=key;
+    const text=document.createElement("span");text.textContent=label;item.append(swatch,text);legend.appendChild(item);
+  });
+  const box=document.createElement("div");box.append(wrap,legend);return box;
 }
 function createRangeViz(finding){
   const range=rangePosition(finding);if(!range)return null;
@@ -750,7 +792,7 @@ function createRangeViz(finding){
 function renderFindings(findings){
   const f=$("findings");f.textContent="";const filtered=filterFindings(findings,activeFindingFilter);$("secFindings").style.display=findings.length?"block":"none";
   $("resultsCount").textContent=`${filtered.length} / ${findings.length} ${t("findings").toLocaleLowerCase(currentLang)} · ${t("all")} ${findings.length}`;
-  filtered.forEach(x=>{const st=["normal","low","high","borderline","critical","uninterpreted"].includes(x.status)?x.status:"uninterpreted";const wrap=document.createElement("details");wrap.className="finding-wrap";wrap.dataset.status=st;
+  filtered.forEach(x=>{const st=["normal","low","high","borderline","critical","uninterpreted"].includes(x.status)?x.status:"uninterpreted";const wrap=document.createElement("details");wrap.className="finding-wrap";wrap.dataset.status=st;wrap.dataset.findingId=x.findingId||"";
     const row=document.createElement("summary");row.className="finding";row.innerHTML='<div class="name"><b></b><span></span></div><div class="val"><span class="v"></span><small></small></div><span class="chip-status"></span>';
     row.querySelector(".name b").textContent=x.test||"";row.querySelector(".name span").textContent=[x.meaningShort,x.sourcePage?`${t("page")} ${x.sourcePage}`:""].filter(Boolean).join(" · ");row.querySelector(".val .v").textContent=(x.value||"")+(x.unit?" "+x.unit:"");row.querySelector(".val small").textContent=x.refRange?(t("reference")+": "+x.refRange):"";
     const c=row.querySelector(".chip-status");c.classList.add(st);c.textContent=st==="uninterpreted"?t("uncertain"):t(st);const detail=document.createElement("div");detail.className="finding-detail";const p=document.createElement("p");p.textContent=x.explain||t("uninterpreted");detail.appendChild(p);if(x.originalTest&&x.originalTest!==x.test){const original=document.createElement("p");original.className="finding-original";original.textContent=`${t("report")}: ${x.originalTest}`;detail.appendChild(original);}const visual=createRangeViz(x);if(visual)detail.appendChild(visual);wrap.append(row,detail);f.appendChild(wrap);
@@ -809,13 +851,13 @@ function render(r,provider,scrollToResults=true){
 }
 
 /* ---------------- history (local only) ---------------- */
-function loadHist(){try{return JSON.parse(localStorage.getItem("lumen_hist")||"[]");}catch(e){return[];}}
+function loadHist(){try{return JSON.parse(localStorage.getItem("spasht_hist")||"[]");}catch(e){return[];}}
 function saveHistory(r,extraction){
   const h=loadHist();
   if(!currentAnalysisId)currentAnalysisId=`report-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
   const existing=h.findIndex(item=>item.id===currentAnalysisId);const item={id:currentAnalysisId,t:existing>=0?h[existing].t:Date.now(),updated:Date.now(),locale:currentLang,overall:r.overall,headline:r.headline,reportType:r.reportType||"",report:r,extraction};
   if(existing>=0)h.splice(existing,1);h.unshift(item);
-  try{localStorage.setItem("lumen_hist",JSON.stringify(h.slice(0,10)));}catch(e){}
+  try{localStorage.setItem("spasht_hist",JSON.stringify(h.slice(0,10)));}catch(e){}
 }
 function renderHist(){
   const h=loadHist(),box=$("histList");box.innerHTML="";
@@ -839,7 +881,7 @@ $("histBtn").onclick=()=>{
   el.style.display=show?"block":"none";
   if(show)el.scrollIntoView({behavior:"smooth"});
 };
-$("clearHist").onclick=()=>{try{localStorage.removeItem("lumen_hist");}catch(e){}renderHist();};
+$("clearHist").onclick=()=>{try{localStorage.removeItem("spasht_hist");}catch(e){}renderHist();};
 
 /* ---------------- actions ---------------- */
 $("retryExplanationBtn").onclick=()=>{if(lastExtraction)requestExplanation(lastExtraction);};
@@ -871,8 +913,8 @@ function speakDevice(index=audioIndex){
 function fallbackDevice(){revokeAudio();$("speechStatus").textContent="";speakDevice(0);}
 async function startNarration(){
   if(!lastReport)return;stopAudio(true);audioChunks=splitNarrationSections(buildNarrationSections(lastReport,narrationLabels()));if(!audioChunks.length)return;
-  let consent=null;try{consent=localStorage.getItem("lumen_speech_consent");}catch(e){}
-  if(!consent){consent=window.confirm(t("audioConsent"))?"azure":"device";try{localStorage.setItem("lumen_speech_consent",consent);}catch(e){}}
+  let consent=null;try{consent=localStorage.getItem("spasht_speech_consent");}catch(e){}
+  if(!consent){consent=window.confirm(t("audioConsent"))?"azure":"device";try{localStorage.setItem("spasht_speech_consent",consent);}catch(e){}}
   if(consent==="device"){fallbackDevice();return;}
   $("speechStatus").textContent=t("audioLoading");audioUrls=await hostedAudio(audioChunks);$("speechStatus").textContent="";if(audioUrls)playHosted(0);else fallbackDevice();
 }
@@ -882,7 +924,7 @@ $("readBtn").onclick=()=>{if(audioMode==="hosted"){if(reportAudio.paused)reportA
 $("restartAudioBtn").onclick=()=>{stopAudio(true);startNarration();};
 $("calendarBtn").onclick=()=>{
   const date=$("reminderDate").value;if(!date){$("reminderStatus").textContent=t("selectDate");return;}
-  try{const content=createReminderIcs({date,title:t("followUpReminder")+(lastReport?.reportType?": "+lastReport.reportType:""),description:(lastReport?.questions||[]).join("\n")});const url=URL.createObjectURL(new Blob([content],{type:"text/calendar;charset=utf-8"}));const link=document.createElement("a");link.href=url;link.download="lumen-follow-up.ics";link.click();setTimeout(()=>URL.revokeObjectURL(url),0);$("reminderStatus").textContent="";}catch(e){$("reminderStatus").textContent=t("selectDate");}
+  try{const content=createReminderIcs({date,title:t("followUpReminder")+(lastReport?.reportType?": "+lastReport.reportType:""),description:(lastReport?.questions||[]).join("\n")});const url=URL.createObjectURL(new Blob([content],{type:"text/calendar;charset=utf-8"}));const link=document.createElement("a");link.href=url;link.download="spasht-follow-up.ics";link.click();setTimeout(()=>URL.revokeObjectURL(url),0);$("reminderStatus").textContent="";}catch(e){$("reminderStatus").textContent=t("selectDate");}
 };
 $("newBtn").onclick=()=>{
   $("results").style.display="none";pages=[];lastReport=null;lastExtraction=null;

@@ -1,12 +1,48 @@
 {
   "artboards": [
-    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 560, "h": 1040, "title": "Brief" },
-    { "file": "FacingPage.dc.html", "x": 640, "y": 0, "w": 1080, "h": 1660, "title": "A — Facing page" },
-    { "file": "Eighteen.dc.html", "x": 1800, "y": 0, "w": 1080, "h": 1660, "title": "B — Eighteen" },
-    { "file": "Instrument.dc.html", "x": 2960, "y": 0, "w": 1080, "h": 1420, "title": "C — Instrument" }
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 560,
+      "h": 1040,
+      "title": "Brief"
+    },
+    {
+      "file": "FacingPage.dc.html",
+      "x": 640,
+      "y": 0,
+      "w": 1080,
+      "h": 1660,
+      "title": "A \u2014 Facing page"
+    },
+    {
+      "file": "Eighteen.dc.html",
+      "x": 1800,
+      "y": 0,
+      "w": 1080,
+      "h": 1660,
+      "title": "B \u2014 Eighteen"
+    },
+    {
+      "file": "Instrument.dc.html",
+      "x": 2960,
+      "y": 0,
+      "w": 1080,
+      "h": 1420,
+      "title": "C \u2014 Instrument"
+    }
   ],
   "annotations": [
-    { "id": "pick-one", "x": 0, "y": 1100, "w": 560, "text": "Pick a direction, then I build it into index.html for real.\n\nMixing is fine: e.g. A's range scale inside C's density, or B's script wall as the hero on top of A." }
+    {
+      "id": "decision",
+      "x": 0,
+      "y": 1100,
+      "w": 560,
+      "text": "DECIDED 2026-08-20 \u2014 built into index.html:\n\nB's plum masthead + Bricolage display for the marketing surface.\nA's cool paper, Plex Mono values and range-scale for the report surface.\n\nB's script wall was built, then removed: five scripts in the hero read as clutter to someone trying to understand their own result.\n\nC was NOT used as a look. Its strip chart WAS taken: the report now carries a panel map, every value with a printed range plotted against it, furthest-out first."
+    }
   ],
-  "launch": { "view": "canvas" }
+  "launch": {
+    "view": "canvas"
+  }
 }

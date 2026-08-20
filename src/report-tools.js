@@ -80,8 +80,8 @@ function icsEscape(value) {
 export function createReminderIcs({ date, title, description = "" }) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) throw new Error("Invalid reminder date");
   const stamp = String(date).replaceAll("-", "");
-  const uid = `lumen-${stamp}-${Math.random().toString(36).slice(2)}@local`;
-  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Lumen//Follow-up reminder//EN", "BEGIN:VEVENT",
+  const uid = `spasht-${stamp}-${Math.random().toString(36).slice(2)}@local`;
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Spasht//Follow-up reminder//EN", "BEGIN:VEVENT",
     `UID:${uid}`, `DTSTART;VALUE=DATE:${stamp}`, `SUMMARY:${icsEscape(title)}`, `DESCRIPTION:${icsEscape(description)}`,
     "END:VEVENT", "END:VCALENDAR", ""].join("\r\n");
 }

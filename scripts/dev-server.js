@@ -128,6 +128,6 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
-  console.log(`Lumen local server: http://localhost:${PORT}`);
+  console.log(`Spasht local server: http://localhost:${PORT}`);
   console.log("Provider keys loaded from .env and .env.local; values are never printed.");
 });

@@ -261,13 +261,13 @@ test("single-key adjudication uses an anonymous item and remaps the strict respo
 
 test("translation reviewer never reads or sends report data", async () => {
   const source = await readFile(new URL("../scripts/review-translations.js", import.meta.url), "utf8");
-  assert.doesNotMatch(source, /api\/analyze|lumen_hist|reportType|sourceText|findingId/);
+  assert.doesNotMatch(source, /api\/analyze|spasht_hist|reportType|sourceText|findingId/);
   assert.match(source, /DEEPINFRA_API_KEY/);
   assert.doesNotMatch(source, /console\.log\(.*API_KEY/);
 });
 
 test("DeepInfra review retries rate limits and resumes from its cache", async () => {
-  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "lumen-translation-review-"));
+  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "spasht-translation-review-"));
   let calls = 0;
   const fetchImpl = async () => {
     calls++;
@@ -300,7 +300,7 @@ test("DeepInfra review retries rate limits and resumes from its cache", async ()
 });
 
 test("DeepInfra requests apply the selected schema and output budget", async () => {
-  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "lumen-translation-review-schema-"));
+  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "spasht-translation-review-schema-"));
   let requestBody;
   try {
     await cachedDeepInfraRequest("test-model", "schema-prompt", {
@@ -327,7 +327,7 @@ test("DeepInfra requests apply the selected schema and output budget", async () 
 });
 
 test("DeepInfra review rejects malformed model responses", async () => {
-  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "lumen-translation-review-invalid-"));
+  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "spasht-translation-review-invalid-"));
   try {
     await assert.rejects(
       cachedDeepInfraRequest("test-model", "invalid-prompt", {
@@ -348,7 +348,7 @@ test("DeepInfra review rejects malformed model responses", async () => {
 });
 
 test("DeepInfra review discards an invalid cached envelope and refetches", async () => {
-  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "lumen-translation-review-stale-"));
+  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "spasht-translation-review-stale-"));
   const model = "test-model";
   const prompt = "stale-prompt";
   const cacheKey = translationReviewCacheKey(model, prompt);
@@ -371,7 +371,7 @@ test("DeepInfra review discards an invalid cached envelope and refetches", async
 });
 
 test("DeepInfra review aborts a stalled model request", async () => {
-  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "lumen-translation-review-timeout-"));
+  const cacheDirectory = await mkdtemp(path.join(os.tmpdir(), "spasht-translation-review-timeout-"));
   try {
     await assert.rejects(
       cachedDeepInfraRequest("test-model", "stalled-prompt", {

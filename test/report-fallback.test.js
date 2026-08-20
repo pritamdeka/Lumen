@@ -6,7 +6,7 @@ const labels = {
   report: "Report",
   analysisTimeout: "The explanation is taking longer than expected.",
   uninterpreted: "Not interpreted — compare with your original report.",
-  disclaimerTitle: "Lumen is not a doctor.",
+  disclaimerTitle: "Spasht is not a doctor.",
   disclaimerBody: "Always consult a qualified clinician."
 };
 
